@@ -24,15 +24,3 @@ run_Queue:
 # Tools
 clean:
 	rm -rf src/*/*.class; rm -rf *.zip
-
-zip_preedit:
-	zip -r concurrency_preedit.zip .
-
-zip_da:
-	zip -r concurrency_da_postedit.zip .
-
-zip_sonnet:
-	zip -r concurrency_sonnet_postedit.zip .
-
-zip_rewrite:
-	zip -r concurrency_rewrite.zip .
