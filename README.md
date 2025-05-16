@@ -94,7 +94,7 @@
     each tested using 4 threads. If remove/element is chosen there is
     then a 50/50 chance to choose either remove or element.
 
-## BlockingQueueImplementation
+## BlockingQueue implementation
 
     This blocking queue implementation simply synchronizes on add, remove and element
     methods in order to ensure atomicity. Remove and Element methods will block by
@@ -106,7 +106,7 @@
     that is the best we can really do for a queue as it is an inherently sequential
     data structure.
 
-## NonBlockingQueueImplementation
+## NonBlockingQueue implementation
 
     This non-blocking queue implementation is complex but elegant. The head and tail
     Nodes are stored as an AtomicStampableReference<Node[]> where arr[0] = head and
