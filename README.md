@@ -28,9 +28,9 @@
     frequent as the array grows. There are also only log(n) locks to copy even when
     this does occur.
 
-## NonBlockingResizableArray implementation
+## LockFreeResizableArray implementation
 
-    My NonBlockingResizableArray implementation has a few little complexities to it, but
+    My LockFreeResizableArray implementation has a few little complexities to it, but
     shouldn't be too hard to follow. The array is stored as AtomicStampedReference<Object[]>
     A compareAndSet() operation on this reference will only fail if the address of the
     Object[] has changed as compareAndSet() uses "==" and not deep-equality. For this reason
@@ -70,9 +70,9 @@
     about. The efficiency is strong in pretty much all scenarios as there is not much
     overhead involved in the locking process.
 
-## NonBlockingStack implementation
+## LockFreeStack implementation
 
-    My NonBlockingStack implementation is a little more nuanced, but still pretty easy to
+    My LockFreeStack implementation is a little more nuanced, but still pretty easy to
     follow. Similarly to the ResizableArray above, I've used a StampedAtomicReference here,
     except this time it is a reference to the node that is atop the stack. A push operation
     allocates a new node, links it and increments the stamp. A pop returns null if the stack
@@ -106,7 +106,7 @@
     that is the best we can really do for a queue as it is an inherently sequential
     data structure.
 
-## NonBlockingQueue implementation
+## LockFreeQueue implementation
 
     This non-blocking queue implementation is complex but elegant. The head and tail
     Nodes are stored as an AtomicStampableReference<Node[]> where arr[0] = head and
@@ -117,3 +117,26 @@
     linked yet. This allows add() and element() to continue to execute concurrently
     even when all elements are lagged, but removals must wait until at least head.next()
     has at least been linked in correctly.
+
+# Queue
+
+## Usage
+
+    cd src/Deque
+    javac DequeSimulation.java
+    java DequeSimulation k m
+    // Where k = % chance of remove/element (0-100), m = number of accesses per thread
+
+    This will output the execution time for both atomic stack strctures,
+    each tested using 4 threads. There is always a 50/50 chance of using
+    either the front or back of the deque. If remove is chosen there is a
+    50/50 chance of using element or remove.
+
+## BlockingDeque implementation
+
+    // TODO
+
+## LockFreeDeque implementation
+
+    This non-blocking queue implementation is complex but elegant. The head and tail
+    // TODO

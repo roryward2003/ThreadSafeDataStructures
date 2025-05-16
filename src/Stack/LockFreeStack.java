@@ -1,14 +1,14 @@
 import java.util.concurrent.atomic.AtomicStampedReference;
 
-// Thread-safe stack implementation using non-blocking synchronization
+// Thread-safe stack implementation using lock free synchronization
 
-public class NonBlockingStack {
+public class LockFreeStack {
 
     // Internal data
     private AtomicStampedReference<Node> top;
 
     // Basic constructor
-    public NonBlockingStack() {
+    public LockFreeStack() {
         top = new AtomicStampedReference<Node>(null, 0);
     }
 

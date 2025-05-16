@@ -1,8 +1,8 @@
 import java.util.concurrent.atomic.AtomicStampedReference;
 
-// Thread-safe FIFO queue implementation using non-blocking synchronization
+// Thread-safe FIFO queue implementation using lock free synchronization
 
-public class NonBlockingQueue {
+public class LockFreeQueue {
 
     // Internal data and constants
     AtomicStampedReference<Node[]> headAndTail;
@@ -11,7 +11,7 @@ public class NonBlockingQueue {
     private static final Node[] EMPTY = new Node[]{null, null};
 
     // Basic constructor
-    public NonBlockingQueue() {
+    public LockFreeQueue() {
         headAndTail = new AtomicStampedReference<Node[]>(EMPTY, 0);
     }
 

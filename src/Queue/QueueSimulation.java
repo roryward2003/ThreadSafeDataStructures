@@ -15,7 +15,7 @@ public class QueueSimulation {
         Thread[] tA = new Thread[4];
         Thread[] tB = new Thread[4];
         BlockingQueueTester    a = new BlockingQueueTester(new BlockingQueue(), k, m);
-        NonBlockingQueueTester b = new NonBlockingQueueTester(new NonBlockingQueue(), k, m);
+        LockFreeQueueTester b = new LockFreeQueueTester(new LockFreeQueue(), k, m);
         for(int i=0; i<4; i++) {
             tA[i] = new Thread(a);
             tB[i] = new Thread(b);
@@ -33,7 +33,7 @@ public class QueueSimulation {
         for(Thread t : tB)
             t.run();
         timeAfter = System.currentTimeMillis();
-        System.out.println("NonBlockingQueue execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("LockFreeQueue execution time: "+(timeAfter-timeBefore)+"ms");
     }   
 }
 
@@ -71,17 +71,17 @@ class BlockingQueueTester implements Runnable {
     }
 }
 
-// This class tests a NonBlockingQueue implementation
-class NonBlockingQueueTester implements Runnable {
+// This class tests a LockFreeQueue implementation
+class LockFreeQueueTester implements Runnable {
 
     // Private variables
-    private NonBlockingQueue queue;
+    private LockFreeQueue queue;
     private ThreadLocalRandom rng;
     private int k;
     private int m;
 
-    // Basic constructor with shared NonBlockingQueue reference
-    public NonBlockingQueueTester(NonBlockingQueue queue, int k, int m) {
+    // Basic constructor with shared LockFreeQueue reference
+    public LockFreeQueueTester(LockFreeQueue queue, int k, int m) {
         this.queue = queue;
         this.rng   = ThreadLocalRandom.current();
         this.k     = k;

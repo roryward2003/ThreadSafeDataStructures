@@ -15,7 +15,7 @@ public class ResizableArraySimulation {
         Thread[] tA = new Thread[4];
         Thread[] tB = new Thread[4];
         BlockingResizableArrayTester    a = new BlockingResizableArrayTester(new BlockingResizableArray(), k, m);
-        NonBlockingResizableArrayTester b = new NonBlockingResizableArrayTester(new NonBlockingResizableArray(), k, m);
+        LockFreeResizableArrayTester b = new LockFreeResizableArrayTester(new LockFreeResizableArray(), k, m);
         for(int i=0; i<4; i++) {
             tA[i] = new Thread(a);
             tB[i] = new Thread(b);
@@ -33,7 +33,7 @@ public class ResizableArraySimulation {
         for(Thread t : tB)
             t.run();
         timeAfter = System.currentTimeMillis();
-        System.out.println("NonBlockingResizableArray execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("LockFreeResizableArray execution time: "+(timeAfter-timeBefore)+"ms");
     }   
 }
 
@@ -73,17 +73,17 @@ class BlockingResizableArrayTester implements Runnable {
     }
 }
 
-// This class tests a NonBlockingResizableArray implementation
-class NonBlockingResizableArrayTester implements Runnable {
+// This class tests a LockFreeResizableArray implementation
+class LockFreeResizableArrayTester implements Runnable {
 
     // Private variables
-    private NonBlockingResizableArray arr;
+    private LockFreeResizableArray arr;
     private ThreadLocalRandom rng;
     private int k;
     private int m;
 
-    // Basic constructor with shared NonBlockingResizableArray reference
-    public NonBlockingResizableArrayTester(NonBlockingResizableArray arr, int k, int m) {
+    // Basic constructor with shared LockFreeResizableArray reference
+    public LockFreeResizableArrayTester(LockFreeResizableArray arr, int k, int m) {
         this.arr = arr;
         this.rng = ThreadLocalRandom.current();
         this.k = k;

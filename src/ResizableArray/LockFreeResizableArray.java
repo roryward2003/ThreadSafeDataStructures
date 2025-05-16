@@ -1,14 +1,14 @@
 import java.util.concurrent.atomic.AtomicStampedReference;
 
-// Resizable thread safe array implementation, using only lock-free methods.
+// Resizable thread safe array implementation, using only lock free methods.
 
-public class NonBlockingResizableArray {
+public class LockFreeResizableArray {
 
     // Atomic stamped reference to the array allows for atomic get, set and extend
     private AtomicStampedReference<Object[]> arrayRef;
 
     // Constructor
-    public NonBlockingResizableArray() {
+    public LockFreeResizableArray() {
 
         // Initialize with size 20 to match q1a implementation
         Object[] initialArray = new Object[20];
