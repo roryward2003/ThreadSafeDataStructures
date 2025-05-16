@@ -15,7 +15,7 @@ public class StackSimulation {
         Thread[] tA = new Thread[4];
         Thread[] tB = new Thread[4];
         BlockingStackTester    a = new BlockingStackTester(new BlockingStack(), k, m);
-        NonBlockingStackTester b = new NonBlockingStackTester(new NonBlockingStack(), k, m);
+        LockFreeStackTester b = new LockFreeStackTester(new LockFreeStack(), k, m);
         for(int i=0; i<4; i++) {
             tA[i] = new Thread(a);
             tB[i] = new Thread(b);
@@ -33,7 +33,7 @@ public class StackSimulation {
         for(Thread t : tB)
             t.run();
         timeAfter = System.currentTimeMillis();
-        System.out.println("NonBlockingStack execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("LockFreeStack execution time: "+(timeAfter-timeBefore)+"ms");
     }   
 }
 
@@ -66,17 +66,17 @@ class BlockingStackTester implements Runnable {
     }
 }
 
-// This class tests a NonBlockingStack resizable array implementation
-class NonBlockingStackTester implements Runnable {
+// This class tests a LockFreeStack resizable array implementation
+class LockFreeStackTester implements Runnable {
 
     // Private variables
-    private NonBlockingStack stack;
+    private LockFreeStack stack;
     private ThreadLocalRandom rng;
     private int k;
     private int m;
 
-    // Basic constructor with shared NonBlockingStack reference
-    public NonBlockingStackTester(NonBlockingStack stack, int k, int m) {
+    // Basic constructor with shared LockFreeStack reference
+    public LockFreeStackTester(LockFreeStack stack, int k, int m) {
         this.stack = stack;
         this.rng   = ThreadLocalRandom.current();
         this.k     = k;
