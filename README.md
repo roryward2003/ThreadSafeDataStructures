@@ -96,10 +96,24 @@
 
 ## BlockingQueueImplementation
 
-    My BlockingQueue implementation is very straightforward. It simply synchronizes add,
-    remove and element operations on the same object so that they appear atomic to all other
-    threads. This ensures sequential consistency and requires minimal effort to implement
-    or reason about. The efficiency is grand in pretty much all scenarios as there is not
-    too much overhead involved in the locking process.
+    This blocking queue implementation simply synchronizes on add, remove and element
+    methods in order to ensure atomicity. Remove and Element methods will block by
+    sleeping if the queue is empty and will be woken when something is added. The
+    queue also exposes an isEmpty() method for the simulator to use, although this is
+    not guaranteed to be thread-safe and is solely intended for avoiding a situation
+    where all simulating threads attempt to remove from an empty queue and get stuck.
+    This implementation is very restrictive and allows for minimal concurrency, but
+    that is the best we can really do for a queue as it is an inherently sequential
+    data structure.
 
 ## NonBlockingQueueImplementation
+
+    This non-blocking queue implementation is complex but elegant. The head and tail
+    Nodes are stored as an AtomicStampableReference<Node[]> where arr[0] = head and
+    arr[1] = tail. The pair can be CAS'd atomically using this method. The complexity
+    arises when the previousTail.next() and headAndTail[1] must be updated in unison.
+    This is not acheivable directly, so instead the headAndTail[1] is updated first,
+    and removals will force fail with a -1 expected stamp if head.next() hasn't been
+    linked yet. This allows add() and element() to continue to execute concurrently
+    even when all elements are lagged, but removals must wait until at least head.next()
+    has at least been linked in correctly.
