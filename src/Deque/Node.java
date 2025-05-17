@@ -1,6 +1,6 @@
 // Node helper class for building DSA implementations
 
-class Node {
+public class Node {
 
     // Internal data
     private Object o;
