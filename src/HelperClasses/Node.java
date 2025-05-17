@@ -1,4 +1,4 @@
-// Node helper class for building the FIFO queue implementations
+// Node helper class for building DSA implementations
 
 class Node {
 
@@ -27,7 +27,7 @@ class Node {
     // Get and Set next Node
     public Node getNext() { return next; }
     public void setNext(Node next) { this.next = next; }
-
+    
     // Get and Set prev Node
     public Node getPrev() { return prev; }
     public void setPrev(Node prev) { this.prev = prev; }

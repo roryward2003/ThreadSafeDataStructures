@@ -134,7 +134,11 @@
 
 ## BlockingDeque implementation
 
-    // TODO
+    This BlockingDeque implementation is very straightforward and almost identical to
+    the BlockingQueue implementation, except that it uses a doubly-linked list instead
+    of a singly-linked list. This allows all operations to be implemented in O(1) time.
+    Remove() and Get() methods block on an empty deque and will sleep until notified
+    by an Add() call.
 
 ## LockFreeDeque implementation
 

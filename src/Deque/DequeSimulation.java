@@ -58,7 +58,7 @@ class BlockingDequeTester implements Runnable {
     @Override
     public void run() {
         for(int i=0; i<m; i++) {
-            if(rng.nextInt(100) >= k) {
+            if(rng.nextInt(100) >= k  || deque.isEmpty()) {
                 if(rng.nextBoolean()) {
                     synchronized(this) { deque.addFirst(new Object()); }
                 } else {
