@@ -29,7 +29,7 @@ run_Queue:
 	cd src/Queue; java QueueSimulation 60 1000000
 
 run_Deque:
-	cd src/Deque; java DequeSimulation 60 1000000
+	cd src/Deque; java DequeSimulation 60 100000
 
 
 # Tools

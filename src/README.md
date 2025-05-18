@@ -7,7 +7,7 @@
     java ResizableArraySimulation k m
     // Where k = % chance of extending (0-100), m = number of accesses per thread
 
-    This will output the execution time for both atomic array strctures,
+    This will output the execution time for both atomic Array structures,
     each tested using 4 threads.
 
 ##  BlockingResizableArray implementation
@@ -59,7 +59,7 @@
     java StackSimulation k m
     // Where k = % chance of pop (0-100), m = number of accesses per thread
 
-    This will output the execution time for both atomic stack strctures,
+    This will output the execution time for both atomic Stack structures,
     each tested using 4 threads.
 
 ## BlockingStack implementation
@@ -90,7 +90,7 @@
     java QueueSimulation k m
     // Where k = % chance of remove/element (0-100), m = number of accesses per thread
 
-    This will output the execution time for both atomic stack strctures,
+    This will output the execution time for both atomic Queue structures,
     each tested using 4 threads. If remove/element is chosen there is
     then a 50/50 chance to choose either remove or element.
 
@@ -127,7 +127,7 @@
     java DequeSimulation k m
     // Where k = % chance of remove/element (0-100), m = number of accesses per thread
 
-    This will output the execution time for both atomic stack strctures,
+    This will output the execution time for both atomic Deque structures,
     each tested using 4 threads. There is always a 50/50 chance of using
     either the front or back of the deque. If remove is chosen there is a
     50/50 chance of using element or remove.
@@ -142,5 +142,51 @@
 
 ## LockFreeDeque implementation
 
-    This non-blocking queue implementation is complex but elegant. The head and tail
+    This LockFreeDeque implementation has quite a few complexities to it, but is robust
+    in the face of tail lag, head lag, the ABA problem and any standard data races that
+    could occur between additions, removals and gets at either end of the queue. The
+    deque uses a doubly-linked list structure to implement O(1) operations. The CAS
+    primitive is used with stamped references to atomically update both the refernces
+    and version numbers.
+
+    Of course, the problems arise when changes to the head and tail must also appear to
+    atomically update the .prev and .next references of the adjacent nodes respectively.
+    This is impossible with standard CAS operations, so the solution is update the tail
+    or head atomically first, and then update the links accordingly. Other threads will
+    see this partial state, and must be able to recognise is and fail their CAS operations
+    until the node they need is linked in correctly. This is certainly not wait-free but
+    is lock-free and immune to data races. This forced failure is encapsulated by the
+    rather complex conditional statements in the loop conditions of both remove() ops.
+    
+    The beauty of this approach is that the add operations do not need to worry about
+    this, because they can continue to add on as soon as the tail or head are updated
+    even if they are not linked correctly. The remove operations will also only need
+    to force fail their CAS is the current head or tail are lagging, but can continue
+    on if any other internal node is lagging. This approach still squeezes out good
+    efficiency thanks to this fact, whilst remaining robust to all data races.
+
+    Another nice little trick that I have employed here is storing the head and tail
+    under the same atomic reference. This way, the change between non-empty and empty
+    states in either direction appears atomic, and thus threads can always rely on the
+    assumption that if head == null then tail is also null.
+
+# Barrier
+
+## Usage
+
+    cd src/Barrier
+    javac BarrierSimulation.java
+    java BarrierSimulation t n
+    // Where t = number of threads, n = number of barrier re-uses
+
+    This will output the execution time for both atomic Barrier structures,
+    each tested using t threads. Each barrier arrival is immediately followed
+    by a random sleep of 0-5ms to simulate an operation.
+
+## BlockingBarrier implementation
+
+    // TODO
+
+## LockFreeBarrier implementation
+
     // TODO

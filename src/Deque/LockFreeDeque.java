@@ -27,7 +27,7 @@ public class LockFreeDeque {
                 return;                   // Deque was empty, new node added successfully
 
         } while(!headAndTail.compareAndSet(hnt, new Node[]{newNode, hnt[TAIL]}, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE));
-        hnt[HEAD].setPrev(newNode);       // Deque had one or more elements, new tail added successfully
+        hnt[HEAD].setPrev(newNode);       // Deque had one or more elements, new head added successfully
     }
 
     // Thread-safe add - Can still succeed if tail isn't linked yet
@@ -53,15 +53,17 @@ public class LockFreeDeque {
         do {
             hnt = headAndTail.get(stampHolder);
             if(hnt[HEAD] == null)
-                return null;              // Queue was empty, return null
+                return null;              // Deque was empty, return null
 
             if(hnt[HEAD] == hnt[TAIL] && headAndTail.compareAndSet(hnt, EMPTY, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-                return hnt[HEAD].get();   // Queue had one element, removed head successfully
+                return hnt[HEAD].get();   // Deque had one element, removed head successfully
 
-        // Force fail with stamp -1 if head.next() hasn't been linked yet or head hasn't been linked yet
+        // Conditional force fails with stamp -1 if head.next() or head itself haven't been linked yet
         } while(!headAndTail.compareAndSet(hnt, new Node[]{hnt[HEAD].getNext(), hnt[TAIL]},
-        ((( (tempNext = hnt[HEAD].getNext()) == null && hnt[HEAD] != hnt[TAIL] ) || tempNext.getPrev() == null)  ? -1 : stampHolder[0]), (stampHolder[0]+1) % Integer.MAX_VALUE));
-        return hnt[HEAD].get();           // Queue had more than one element, removed head successfully
+        ((( (tempNext = hnt[HEAD].getNext()) == null && hnt[HEAD] != hnt[TAIL] ) || tempNext.getPrev() == null)
+        ? -1 : stampHolder[0]), (stampHolder[0]+1) % Integer.MAX_VALUE));
+
+        return hnt[HEAD].get();           // Deque had more than one element, removed head successfully
     }
 
     // Thread-safe remove
@@ -72,15 +74,17 @@ public class LockFreeDeque {
         do {
             hnt = headAndTail.get(stampHolder);
             if(hnt[HEAD] == null)
-                return null;              // Queue was empty, return null
+                return null;              // Deque was empty, return null
 
             if(hnt[HEAD] == hnt[TAIL] && headAndTail.compareAndSet(hnt, EMPTY, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-                return hnt[TAIL].get();   // Queue had one element, removed head successfully
+                return hnt[TAIL].get();   // Deque had one element, removed tail successfully
 
-        // Force fail with stamp -1 if head.next() hasn't been linked yet or head hasn't been linked yet
+        // Conditional force fails with stamp -1 if tail.prev() or tail itself haven't been linked yet
         } while(!headAndTail.compareAndSet(hnt, new Node[]{hnt[HEAD], hnt[TAIL].getPrev()},
-        ((( (tempPrev = hnt[TAIL].getPrev()) == null && hnt[TAIL] != hnt[HEAD] ) || tempPrev.getNext() == null)  ? -1 : stampHolder[0]), (stampHolder[0]+1) % Integer.MAX_VALUE));
-        return hnt[TAIL].get();           // Queue had more than one element, removed head successfully
+        ((( (tempPrev = hnt[TAIL].getPrev()) == null && hnt[TAIL] != hnt[HEAD] ) || tempPrev.getNext() == null)
+        ? -1 : stampHolder[0]), (stampHolder[0]+1) % Integer.MAX_VALUE));
+
+        return hnt[TAIL].get();           // Deque had more than one element, removed tail successfully
     }
 
     // Thread-safe element - Atomic at the point of reading
