@@ -180,12 +180,14 @@
     // Where t = number of threads, n = number of barrier re-uses
 
     This will output the execution time for both atomic Barrier structures,
-    each tested using t threads. Each barrier arrival is immediately followed
-    by a random sleep of 0-5ms to simulate an operation.
+    each tested using t threads.
 
 ## BlockingBarrier implementation
 
-    // TODO
+    This BlockingBarrier is a sense reversing n-thread reusable barrier. The arrive()
+    method is synchronised and wait() & notifyAll() are used to ensure there is no
+    busy waiting. The constantly inverting phase allows threads to differentiate
+    between subsequent barrier reuses and thus prevents starvation and data races.
 
 ## LockFreeBarrier implementation
 

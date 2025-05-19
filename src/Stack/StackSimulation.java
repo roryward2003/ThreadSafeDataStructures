@@ -24,14 +24,28 @@ public class StackSimulation {
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
         for(Thread t : tA)
-            t.run();
+            t.start();
+        for(Thread t : tA) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("BlockingStack execution time: "+(timeAfter-timeBefore)+"ms");
         
         // Time the execution of all threads in tB
         timeBefore = System.currentTimeMillis();
         for(Thread t : tB)
-            t.run();
+            t.start();
+        for(Thread t : tB) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("LockFreeStack execution time: "+(timeAfter-timeBefore)+"ms");
     }   
@@ -59,9 +73,9 @@ class BlockingStackTester implements Runnable {
     public void run() {
         for(int i=0; i<m; i++) {
             if(rng.nextInt(100) >= k)
-                synchronized(this) { stack.push(new Object()); } // Push
+                stack.push(new Object()); // Push
             else
-                synchronized(this) { stack.pop(); }              // Pop
+                stack.pop();              // Pop
         }
     }
 }
@@ -88,9 +102,9 @@ class LockFreeStackTester implements Runnable {
     public void run() {
         for(int i=0; i<m; i++) {
             if(rng.nextInt(100) >= k)
-                synchronized(this) { stack.push(new Object()); } // Push
+                stack.push(new Object()); // Push
             else
-                synchronized(this) { stack.pop(); }              // Pop
+                stack.pop();              // Pop
         }
     }
 }

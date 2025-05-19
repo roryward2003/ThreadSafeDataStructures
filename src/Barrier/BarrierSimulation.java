@@ -1,5 +1,3 @@
-import java.util.concurrent.ThreadLocalRandom;
-
 // Simulation for the Blocking and Lock Free barrier implementations
 
 public class BarrierSimulation {
@@ -12,8 +10,8 @@ public class BarrierSimulation {
         int numOps = Integer.parseInt(args[1]);
 
         // Initialise two Thread arrays to test each barrier implementation
-        Thread[] tB = new Thread[numThreads];
         Thread[] tA = new Thread[numThreads];
+        Thread[] tB = new Thread[numThreads];
         BlockingBarrierTester a = new BlockingBarrierTester(new BlockingBarrier(numThreads), numOps);
         LockFreeBarrierTester b = new LockFreeBarrierTester(new LockFreeBarrier(numThreads), numOps);
         for(int i=0; i<numThreads; i++) {
@@ -24,14 +22,28 @@ public class BarrierSimulation {
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
         for(Thread t : tA)
-            t.run();
+            t.start();
+        for(Thread t : tA) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("BlockingBarrier execution time: "+(timeAfter-timeBefore)+"ms");
         
         // Time the execution of all threads in tB
         timeBefore = System.currentTimeMillis();
         for(Thread t : tB)
-            t.run();
+            t.start();
+        for(Thread t : tB) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("LockFreeBarrier execution time: "+(timeAfter-timeBefore)+"ms");
     }   
@@ -42,13 +54,11 @@ class BlockingBarrierTester implements Runnable {
     
     // Private variables
     private BlockingBarrier barrier;
-    private ThreadLocalRandom rng;
     private int numOps;
 
     // Basic constructor with shared BlockingBarrier reference
     public BlockingBarrierTester(BlockingBarrier barrier, int numOps) {
         this.barrier = barrier;
-        this.rng     = ThreadLocalRandom.current();
         this.numOps  = numOps;
     }
 
@@ -57,11 +67,6 @@ class BlockingBarrierTester implements Runnable {
     public void run() {
         for(int i=0; i<numOps; i++) {
             barrier.arrive();
-            try {
-                Thread.sleep(rng.nextLong(5));
-            } catch (Exception e) {
-                throw new RuntimeException("Thread interrupted while sleeping", e);
-            }
         }
     }
 }
@@ -71,13 +76,11 @@ class LockFreeBarrierTester implements Runnable {
     
     // Private variables
     private LockFreeBarrier barrier;
-    private ThreadLocalRandom rng;
     private int numOps;
 
     // Basic constructor with shared BlockingBarrier reference
     public LockFreeBarrierTester(LockFreeBarrier barrier, int numOps) {
         this.barrier = barrier;
-        this.rng     = ThreadLocalRandom.current();
         this.numOps  = numOps;
     }
 
@@ -86,11 +89,6 @@ class LockFreeBarrierTester implements Runnable {
     public void run() {
         for(int i=0; i<numOps; i++) {
             barrier.arrive();
-            try {
-                Thread.sleep(rng.nextLong(5));
-            } catch (Exception e) {
-                throw new RuntimeException("Thread interrupted while sleeping", e);
-            }
         }
     }
 }

@@ -24,14 +24,28 @@ public class DequeSimulation {
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
         for(Thread t : tA)
-            t.run();
+            t.start();
+        for(Thread t : tA) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("BlockingDeque execution time: "+(timeAfter-timeBefore)+"ms");
         
         // Time the execution of all threads in tB
         timeBefore = System.currentTimeMillis();
         for(Thread t : tB)
-            t.run();
+            t.start();
+        for(Thread t : tB) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("LockFreeDeque execution time: "+(timeAfter-timeBefore)+"ms");
     }   
@@ -60,22 +74,22 @@ class BlockingDequeTester implements Runnable {
         for(int i=0; i<m; i++) {
             if(rng.nextInt(100) >= k  || deque.isEmpty()) {
                 if(rng.nextBoolean()) {
-                    synchronized(this) { deque.addFirst(new Object()); }
+                    deque.addFirst(new Object());
                 } else {
-                    synchronized(this) { deque.addLast(new Object()); }
+                    deque.addLast(new Object());
                 }
             } else {
                 if(rng.nextBoolean()) {
                     if(rng.nextBoolean()) {
-                        synchronized(this) { deque.getFirst(); }
+                        deque.getFirst();
                     } else {
-                        synchronized(this) { deque.getLast(); }
+                        deque.getLast();
                     }
                 } else {
                     if(rng.nextBoolean()) {
-                        synchronized(this) { deque.removeFirst(); }
+                        deque.removeFirst();
                     } else {
-                        synchronized(this) { deque.removeLast(); }
+                        deque.removeLast();
                     }
                 }
             }

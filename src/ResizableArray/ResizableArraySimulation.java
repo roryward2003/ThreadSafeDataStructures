@@ -24,16 +24,30 @@ public class ResizableArraySimulation {
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
         for(Thread t : tA)
-            t.run();
+            t.start();
+        for(Thread t : tA) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
-        System.out.println("BlockingResizableArray execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("BlockingArray execution time: "+(timeAfter-timeBefore)+"ms");
         
         // Time the execution of all threads in tB
         timeBefore = System.currentTimeMillis();
         for(Thread t : tB)
-            t.run();
+            t.start();
+        for(Thread t : tB) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
-        System.out.println("LockFreeResizableArray execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("LockFreeArray execution time: "+(timeAfter-timeBefore)+"ms");
     }   
 }
 
@@ -54,6 +68,7 @@ class BlockingResizableArrayTester implements Runnable {
         this.m = m;
     }
 
+    // Synchronized for simulation because we need atomic check size, get[size+1]
     // Threads constructed using this runnable implementation will simulate usage as below
     @Override
     public void run() {
@@ -90,20 +105,21 @@ class LockFreeResizableArrayTester implements Runnable {
         this.m = m;
     }
 
+    // Synchronized for simulation because we need atomic check size, get[size+1]
     // Threads constructed using this runnable implementation will simulate usage as below
     @Override
     public void run() {
         for(int i=0; i<m; i++) {
             if(rng.nextInt(100) >= k) {      // Access any normal part of the array
                 if(rng.nextInt(2) == 0)
-                    arr.set(rng.nextInt(arr.getSize()), new Object());
+                    synchronized(this) { arr.set(rng.nextInt(arr.getSize()), new Object()); }
                 else
-                    arr.get(rng.nextInt(arr.getSize()));
+                    synchronized(this) { arr.get(rng.nextInt(arr.getSize())); }
             } else {                               // Access one past the end of the array
                 if(rng.nextInt(2) == 0)
-                    arr.set(arr.getSize(), new Object());
+                    synchronized(this) { arr.set(arr.getSize(), new Object()); }
                 else
-                    arr.get(arr.getSize());
+                    synchronized(this) { arr.get(arr.getSize()); }
             }
         }
     }

@@ -20,18 +20,32 @@ public class QueueSimulation {
             tA[i] = new Thread(a);
             tB[i] = new Thread(b);
         }
-
+        
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
         for(Thread t : tA)
-            t.run();
+            t.start();
+        for(Thread t : tA) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("BlockingQueue execution time: "+(timeAfter-timeBefore)+"ms");
         
         // Time the execution of all threads in tB
         timeBefore = System.currentTimeMillis();
         for(Thread t : tB)
-            t.run();
+            t.start();
+        for(Thread t : tB) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         timeAfter = System.currentTimeMillis();
         System.out.println("LockFreeQueue execution time: "+(timeAfter-timeBefore)+"ms");
     }   
@@ -59,12 +73,12 @@ class BlockingQueueTester implements Runnable {
     public void run() {
         for(int i=0; i<m; i++) {
             if(rng.nextInt(100) >= k || queue.isEmpty()) {
-                synchronized(this) { queue.add(new Object()); } // Add
+                queue.add(new Object());   // Add
             } else {
                 if(rng.nextBoolean()) {
-                    synchronized(this) { queue.element(); }     // Element
+                    queue.element();       // Element
                 } else {
-                    synchronized(this) { queue.remove();  }     // Remove
+                    queue.remove();        // Remove
                 }
             }
         }
@@ -92,13 +106,13 @@ class LockFreeQueueTester implements Runnable {
     @Override
     public void run() {
         for(int i=0; i<m; i++) {
-            if(rng.nextInt(100) >= k || queue.isEmpty()) {
-                synchronized(this) { queue.add(new Object()); } // Add
+            if(rng.nextInt(100) >= k) {
+                queue.add(new Object());   // Add
             } else {
                 if(rng.nextBoolean()) {
-                    synchronized(this) { queue.element(); }     // Element
+                    queue.element();       // Element
                 } else {
-                    synchronized(this) { queue.remove();  }     // Remove
+                    queue.remove();        // Remove
                 }
             }
         }
