@@ -1,5 +1,5 @@
-package src.stack;
-import src.node.Node;
+package concurrent.stack;
+import concurrent.node.Node;
 
 // Thread-safe stack implementation using blocking synchronization
 

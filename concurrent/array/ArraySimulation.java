@@ -1,9 +1,9 @@
-package src.array;
+package concurrent.array;
 import java.util.concurrent.ThreadLocalRandom;
 
 // Driver class for testing my resizable array implementations
 
-public class ResizableArraySimulation {
+public class ArraySimulation {
 
     public static void main(String[] args) {
 
@@ -15,7 +15,7 @@ public class ResizableArraySimulation {
         // Initialise two four-thread arrays, to test each array implementation independently
         Thread[] tA = new Thread[4];
         Thread[] tB = new Thread[4];
-        BlockingResizableArrayTester    a = new BlockingResizableArrayTester(new BlockingResizableArray(), k, m);
+        BlockingResizableArrayTester a = new BlockingResizableArrayTester(new BlockingResizableArray(), k, m);
         LockFreeResizableArrayTester b = new LockFreeResizableArrayTester(new LockFreeResizableArray(), k, m);
         for(int i=0; i<4; i++) {
             tA[i] = new Thread(a);

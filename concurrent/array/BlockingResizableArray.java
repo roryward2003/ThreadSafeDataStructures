@@ -1,4 +1,4 @@
-package src.array;
+package concurrent.array;
 import java.util.concurrent.locks.ReentrantLock;
 
 // Resizable thread safe array implementation using blocking synchronisation,

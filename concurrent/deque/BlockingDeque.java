@@ -1,5 +1,5 @@
-package src.deque;
-import src.node.Node;
+package concurrent.deque;
+import concurrent.node.Node;
 
 // Thread-safe FIFO queue implementation using blocking synchronization
 

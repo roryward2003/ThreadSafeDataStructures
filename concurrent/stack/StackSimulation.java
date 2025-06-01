@@ -1,4 +1,4 @@
-package src.stack;
+package concurrent.stack;
 import java.util.concurrent.ThreadLocalRandom;
 
 // Driver class for testing my stack implementations

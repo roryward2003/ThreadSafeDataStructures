@@ -1,4 +1,5 @@
-package src.barrier;
+package concurrent.barrier;
+
 
 // Simulation for the Blocking and Lock Free barrier implementations
 

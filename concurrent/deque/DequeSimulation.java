@@ -1,4 +1,4 @@
-package src.deque;
+package concurrent.deque;
 import java.util.concurrent.ThreadLocalRandom;
 
 // Driver class for testing my FIFO deque implementations

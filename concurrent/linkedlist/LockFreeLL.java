@@ -1,6 +1,7 @@
-package src.linkedlist;
+package concurrent.linkedlist;
 import java.util.concurrent.atomic.AtomicReference;
-import src.node.LockFreeNode;
+
+import concurrent.node.LockFreeNode;
 
 // Thread-safe Singly-Linked List implementation using lock-free synchronization
 

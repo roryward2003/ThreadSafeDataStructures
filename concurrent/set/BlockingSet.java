@@ -1,5 +1,5 @@
-package src.set;
-import src.node.Node;
+package concurrent.set;
+import concurrent.node.Node;
 
 // Thread-safe set implementation using lock free synchronization
 

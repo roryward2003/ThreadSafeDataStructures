@@ -1,55 +1,31 @@
+# Suppress "[make] Entering directory..." messages
+MAKEFLAGS += --no-print-directory
+
 # Compile
 all:
-	make ResizableArray; make Stack; make Queue; make Deque; make Barrier; make LL; make Set
+	$(MAKE) array   && $(MAKE) stack && $(MAKE) queue && $(MAKE) deque && \
+	$(MAKE) barrier && $(MAKE) ll    && $(MAKE) set
 
-ResizableArray:
-	cd src/ResizableArray; javac ResizableArraySimulation.java
-	
-Stack:
-	cd src/Stack; javac StackSimulation.java
-
-Queue:
-	cd src/Queue; javac QueueSimulation.java
-
-Deque:
-	cd src/Deque; javac DequeSimulation.java
-
-Barrier:
-	cd src/Barrier; javac BarrierSimulation.java
-
-LL:
-	cd src/LinkedList; javac LLSimulation.java
-
-Set:
-	cd src/Set; javac SetSimulation.java
-
+array:       ; javac concurrent/array/ArraySimulation.java
+stack:       ; javac concurrent/stack/StackSimulation.java
+queue:       ; javac concurrent/queue/QueueSimulation.java
+deque:       ; javac concurrent/deque/DequeSimulation.java
+barrier:     ; javac concurrent/barrier/BarrierSimulation.java
+ll:          ; javac concurrent/linkedlist/LLSimulation.java
+set:         ; javac concurrent/set/SetSimulation.java
 
 # Run simulations
-run_All:
-	make run_ResizableArray; make run_Stack; make run_Queue; make run_Deque; make run_Barrier; make run_LL; make run_Set
-
-run_ResizableArray:
-	cd src/ResizableArray; java ResizableArraySimulation 15 5000
-
-run_Stack:
-	cd src/Stack; java StackSimulation 15 1000000
-
-run_Queue:
-	cd src/Queue; java QueueSimulation 60 1000000
-
-run_Deque:
-	cd src/Deque; java DequeSimulation 60 100000
+run_all:
+	$(MAKE) run_array   && $(MAKE) run_stack && $(MAKE) run_queue && $(MAKE) run_deque && \
+	$(MAKE) run_barrier && $(MAKE) run_ll    && $(MAKE) run_set
 	
-run_Barrier:
-	cd src/Barrier; java BarrierSimulation 10 10000
-
-run_LL:
-	cd src/LinkedList; java LLSimulation 50 10000
-
-run_Set:
-	cd src/Set; java SetSimulation 20 10000
-
+run_array:   ; java concurrent/array/ArraySimulation 15 5000
+run_stack:   ; java concurrent/stack/StackSimulation 15 1000000
+run_queue:   ; java concurrent/queue/QueueSimulation 60 1000000
+run_deque:   ; java concurrent/deque/DequeSimulation 60 100000
+run_barrier: ; java concurrent/barrier/BarrierSimulation 10 10000
+run_ll:      ; java concurrent/linkedlist/LLSimulation 50 10000
+run_set:     ; java concurrent/set/SetSimulation 20 10000
 
 # Tools
-clean:
-	rm -rf src/*/*.class; rm -rf *.zip
+clean:       ; rm -rf concurrent/*/*.class *.zip

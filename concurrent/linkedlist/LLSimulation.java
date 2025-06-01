@@ -1,4 +1,4 @@
-package src.linkedlist;
+package concurrent.linkedlist;
 import java.util.concurrent.ThreadLocalRandom;
 
 // Driver class for testing my linked list implementations

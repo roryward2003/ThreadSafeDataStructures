@@ -1,5 +1,5 @@
-package src.linkedlist;
-import src.node.Node;
+package concurrent.linkedlist;
+import concurrent.node.Node;
 
 // Thread-safe Singly-Linked List implementation using blocking synchronization
 

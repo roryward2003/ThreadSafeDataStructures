@@ -1,4 +1,4 @@
-package src.set;
+package concurrent.set;
 
 // Thread-safe set implementation using lock free synchronization
 

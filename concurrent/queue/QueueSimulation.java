@@ -1,4 +1,4 @@
-package src.queue;
+package concurrent.queue;
 
 import java.util.concurrent.ThreadLocalRandom;
 

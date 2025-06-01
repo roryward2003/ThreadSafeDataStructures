@@ -1,6 +1,7 @@
-package src.queue;
+package concurrent.queue;
 import java.util.concurrent.atomic.AtomicStampedReference;
-import src.node.Node;
+
+import concurrent.node.Node;
 
 // Thread-safe FIFO queue implementation using lock free synchronization
 

@@ -1,4 +1,4 @@
-package src.barrier;
+package concurrent.barrier;
 
 // Reusable n-thread barrier using blocking synchronization
 
