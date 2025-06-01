@@ -1,3 +1,5 @@
+package src.barrier;
+
 // Simulation for the Blocking and Lock Free barrier implementations
 
 public class BarrierSimulation {

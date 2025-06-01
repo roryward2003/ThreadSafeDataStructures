@@ -1,3 +1,5 @@
+package concurrent.node;
+
 // Node helper class for building DSA implementations
 
 public class Node {

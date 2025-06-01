@@ -1,3 +1,4 @@
+package src.array;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 // Resizable thread safe array implementation, using only lock free methods.

@@ -1,3 +1,5 @@
+package src.barrier;
+
 // Reusable n-thread barrier using blocking synchronization
 
 public class BlockingBarrier {

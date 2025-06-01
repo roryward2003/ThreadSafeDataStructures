@@ -1,8 +1,10 @@
+package src.queue;
+
 import java.util.concurrent.ThreadLocalRandom;
 
-// Driver class for testing my stack implementations
+// Driver class for testing my FIFO queue implementations
 
-public class StackSimulation {
+public class QueueSimulation {
 
     public static void main(String[] args) {
 
@@ -11,16 +13,16 @@ public class StackSimulation {
         int k = Integer.parseInt(args[0]);
         int m = Integer.parseInt(args[1]);
 
-        // Initialise two four-thread arrays, to test each stack implementation independently
+        // Initialise two four-thread arrays, to test q2a and q2b respectively
         Thread[] tA = new Thread[4];
         Thread[] tB = new Thread[4];
-        BlockingStackTester    a = new BlockingStackTester(new BlockingStack(), k, m);
-        LockFreeStackTester b = new LockFreeStackTester(new LockFreeStack(), k, m);
+        BlockingQueueTester    a = new BlockingQueueTester(new BlockingQueue(), k, m);
+        LockFreeQueueTester b = new LockFreeQueueTester(new LockFreeQueue(), k, m);
         for(int i=0; i<4; i++) {
             tA[i] = new Thread(a);
             tB[i] = new Thread(b);
         }
-
+        
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
         for(Thread t : tA)
@@ -33,7 +35,7 @@ public class StackSimulation {
             }
         }
         timeAfter = System.currentTimeMillis();
-        System.out.println("BlockingStack execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("BlockingQueue execution time: "+(timeAfter-timeBefore)+"ms");
         
         // Time the execution of all threads in tB
         timeBefore = System.currentTimeMillis();
@@ -47,22 +49,22 @@ public class StackSimulation {
             }
         }
         timeAfter = System.currentTimeMillis();
-        System.out.println("LockFreeStack execution time: "+(timeAfter-timeBefore)+"ms");
+        System.out.println("LockFreeQueue execution time: "+(timeAfter-timeBefore)+"ms");
     }   
 }
 
-// This class tests a BlockingStack implementation
-class BlockingStackTester implements Runnable {
+// This class tests a BlockingQueue implementation
+class BlockingQueueTester implements Runnable {
     
     // Private variables
-    private BlockingStack stack;
+    private BlockingQueue queue;
     private ThreadLocalRandom rng;
     private int k;
     private int m;
 
-    // Basic constructor with shared BlockingStack reference
-    public BlockingStackTester(BlockingStack stack, int k, int m) {
-        this.stack = stack;
+    // Basic constructor with shared BlockingQueue reference
+    public BlockingQueueTester(BlockingQueue queue, int k, int m) {
+        this.queue = queue;
         this.rng   = ThreadLocalRandom.current();
         this.k     = k;
         this.m     = m;
@@ -72,26 +74,31 @@ class BlockingStackTester implements Runnable {
     @Override
     public void run() {
         for(int i=0; i<m; i++) {
-            if(rng.nextInt(100) >= k)
-                stack.push(new Object()); // Push
-            else
-                stack.pop();              // Pop
+            if(rng.nextInt(100) >= k || queue.isEmpty()) {
+                queue.add(new Object());   // Add
+            } else {
+                if(rng.nextBoolean()) {
+                    queue.element();       // Element
+                } else {
+                    queue.remove();        // Remove
+                }
+            }
         }
     }
 }
 
-// This class tests a LockFreeStack resizable array implementation
-class LockFreeStackTester implements Runnable {
+// This class tests a LockFreeQueue implementation
+class LockFreeQueueTester implements Runnable {
 
     // Private variables
-    private LockFreeStack stack;
+    private LockFreeQueue queue;
     private ThreadLocalRandom rng;
     private int k;
     private int m;
 
-    // Basic constructor with shared LockFreeStack reference
-    public LockFreeStackTester(LockFreeStack stack, int k, int m) {
-        this.stack = stack;
+    // Basic constructor with shared LockFreeQueue reference
+    public LockFreeQueueTester(LockFreeQueue queue, int k, int m) {
+        this.queue = queue;
         this.rng   = ThreadLocalRandom.current();
         this.k     = k;
         this.m     = m;
@@ -101,10 +108,15 @@ class LockFreeStackTester implements Runnable {
     @Override
     public void run() {
         for(int i=0; i<m; i++) {
-            if(rng.nextInt(100) >= k)
-                stack.push(new Object()); // Push
-            else
-                stack.pop();              // Pop
+            if(rng.nextInt(100) >= k) {
+                queue.add(new Object());   // Add
+            } else {
+                if(rng.nextBoolean()) {
+                    queue.element();       // Element
+                } else {
+                    queue.remove();        // Remove
+                }
+            }
         }
     }
 }

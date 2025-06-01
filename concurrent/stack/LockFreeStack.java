@@ -1,3 +1,5 @@
+package src.stack;
+import src.node.Node;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 // Thread-safe stack implementation using lock free synchronization

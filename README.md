@@ -191,4 +191,76 @@
 
 ## LockFreeBarrier implementation
 
+    This LockFreeBarrier is also a sense reversing n-thread reusable barrier, but it
+    is far more efficient than the blocking version. It very simply uses an atomic
+    integer to store the count, and an atomic boolean to store the sense. The count
+    is atomically decremented and retrieved with the decrementAndGet() method. The
+    final thread to arrive will observe this value as 0 and reset it to numThreads,
+    then toggle the sense to release all waiting threads. These waiting threads will
+    yield while they loop to prioritise threads that have not arrived at the barrier
+    yet. We do not need to use compareAndSet for the count reset or sense reversal as
+    there could not possibly be contention here as we can only reach this code if all
+    other threads are looping on a yield() call within the barrier, and only reading
+    the boolean value.
+
+# Linked List
+
+## Usage
+
+    cd src/LinkedList
+    javac LLSimulation.java
+    java LLSimulation k n
+    // Where k = %chance of retrieval, n = number of operations
+
+    This will output the execution time for both atomic Linked List structures,
+    each tested using 4 threads. Each operation has a k% chance of being a removal.
+    If removal is chosen there is a 50/50 chance for remove or get, and similarly
+    if insertion is chosen there is a 50/50 chance of indexed insertion and append.
+
+## BlockingLL implementation
+
+    This BlockingLL is very straightforward. The head, tail and size are all tracked
+    to allow for O(1) appends and size check as well as O(n) worst case for searching,
+    and O(k) indexed insertions and retrievals at index k. Quite simply, all methods
+    are synchronized to prevent multiple threads form modifying the state of the list
+    in parallel. This is a very coarse-grained approach that allows for no paralellism
+    and thus is very inefficient, but it is extremely easy to reason about.
+
+## LockFreeLL implementation
+
+    This LockFreeLL implementation is very difficult to reason about if you are not
+    well versed in lock-free data strutcure design. Essentially, I have used Harris's
+    approach of logical removal before physical removal. Traversals skip marked/logically
+    removed nodes. CAS operations fail if the node is marked, so parallel removals and
+    insertions cannot both succeed. Similarly, two parallel removals will not both succeed.
+    This solves the majority of our complexity. We cannot consistently track the size,
+    so we retrieve it via traversal and avoid relying on it where possible. The head
+    and tail references both reference the same sentinel node at all times.
+
+# Set
+
+## Usage
+
+    cd src/Set
+    javac SetSimulation.java
+    java SetSimulation k n
+    // Where k = %chance of insertion or retrieval, n = number of operations
+
+    This will output the execution time for both atomic Set structures, each tested
+    using 4 threads. Each operation has a k% chance of being a removal or insertion.
+    If this is chosen there is a 50/50 chance for remove or insertion, and if this is
+    not chosen then a search is performed. That is, there is a (1-k)% chance of search,
+    a (k/2)% chance of insertion and a (k/2)% chance of retrieval. Typical real world
+    set usage is about 80% search biased.
+
+## BlockingSet implementation
+
+    This blocking set uses a coarse grained blocking approach. All additions, removals
+    and searches just lock on the set object itself using the synchronized keyword. This
+    limits concurrency significantly but does ensure sequential consistency and thread
+    safety by completely eliminating the potential for data races to occur. Null is
+    treated the same as any other obhect in that it can be added, but only once.
+
+## LockFreeSet implementation
+
     // TODO

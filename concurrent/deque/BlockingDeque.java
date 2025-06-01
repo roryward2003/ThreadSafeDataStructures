@@ -1,3 +1,6 @@
+package src.deque;
+import src.node.Node;
+
 // Thread-safe FIFO queue implementation using blocking synchronization
 
 public class BlockingDeque {

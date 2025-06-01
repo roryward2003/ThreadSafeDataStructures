@@ -1,3 +1,6 @@
+package src.stack;
+import src.node.Node;
+
 // Thread-safe stack implementation using blocking synchronization
 
 public class BlockingStack {
