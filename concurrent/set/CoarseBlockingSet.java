@@ -1,15 +1,15 @@
 package concurrent.set;
 import concurrent.node.Node;
 
-// Thread-safe set implementation using lock free synchronization
+// Thread-safe set implementation using coarse grained blocking synchronization
 
-public class BlockingSet {
+public class CoarseBlockingSet {
 
     // Internal data
     private Node head;
 
     // Basic constructor
-    public BlockingSet() {
+    public CoarseBlockingSet() {
         head = null;
     }
 

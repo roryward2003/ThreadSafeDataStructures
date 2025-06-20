@@ -253,7 +253,7 @@
     a (k/2)% chance of insertion and a (k/2)% chance of retrieval. Typical real world
     set usage is about 80% search biased.
 
-## BlockingSet implementation
+## CoarseBlockingSet implementation
 
     This blocking set uses a coarse grained blocking approach. All additions, removals
     and searches just lock on the set object itself using the synchronized keyword. This
@@ -261,6 +261,64 @@
     safety by completely eliminating the potential for data races to occur. Null is
     treated the same as any other obhect in that it can be added, but only once.
 
+## FineBlockingSet implementation
+
+    This blocking set uses a fine grained blocking approach. Each node in the set has
+    its own ReentrantLock object. This allows traversing threads to use "hand-over-hand"
+    locking to safely traverse the list. Additions and removals are guarded by holding
+    both the previous and next nodes.
+
 ## LockFreeSet implementation
+
+    This lock free set implementation maintains a sorted linked list internal structure
+    with sentinel head and tail nodes. Nodes are sorted by the hashcode of their object,
+    with the head and tail having keys Integer.MIN_VALUE and Integer.MAX_VALUE respectively.
+    Collisions in hashcodes are handled elegantly by searching through the key matches,
+    and then appending the new node after the last key match. Nodes are marked for logical
+    removal, then attempted to be physically removed. Traversals from add() and remove()
+    use a helper function called find() which also cleans up any marked nodes along the way.
+    
+    Interference can occasionally cause a retry of the entire operation which can reduce
+    performance under high contention, but the benefits of lock free traversal and both
+    optimistic and lazy synchronization push the performance of this implementation far
+    beyond the capabilites of both blocking implementations.
+
+# HashTable
+
+## Usage
+
+    cd src/HashTable
+    javac HashTableSimulation.java
+    java HashTableSimulation k n
+    // Where k = %chance of insertion, n = number of operations
+
+    This will output the execution time for both atomic HashTable structures, each tested
+    using 4 threads. Each operation has a k% chance of being an insertion. If this is not
+    chosen there is a 50/50 chance for removal or retrieval.
+
+## CoarseBlockingHashTable implementation
+
+    This blocking hash table implementation is pretty straightforward as it only uses one
+    lock to guard all hash table accesses. This is achieved by synchronizing all methods on
+    the hash table object itself using the synchronized keyword. The hash table starts with
+    an initial size of 16 buckets and doubles in size whenever the load factor exceeds 0.75.
+
+## FineBlockingHashTable implementation
+
+    This blocking hash table implementation is a little more complicated as it uses N+1 locks
+    for N buckets. One lock for each bucket, plus a sizeLock for the size related operations;
+    resize(), size() and isEmpty(). The hash table starts with an initial size of 16 buckets
+    and doubles in size whenever the load factor exceeds 0.75.
+    
+    The complexity here arises when a resize happens concurrently with insertions or removals
+    because the hash index used to index into the locks and buckets arrays will become outdated
+    as soon as the arraySize is doubled by the resizing thread. This is solved by ensuring that
+    resizal requires not just the sizeLock but also all of the bucket locks. Insertions and
+    removals must still use some retry logic to ensure that the hash table wasn't resized while
+    they were waiting to acquire their chosen lock, and importantly they must store a local ref
+    to the lock they acquired because they will no longer be able to locate it using hashing if
+    the table has been resized, and as such they would not be able to unlock it.
+
+## LockFreeHashTable implementation
 
     // TODO
