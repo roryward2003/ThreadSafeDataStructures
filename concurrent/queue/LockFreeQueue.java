@@ -5,24 +5,26 @@ import concurrent.node.Node;
 
 // Thread-safe FIFO queue implementation using lock free synchronization
 
-public class LockFreeQueue {
+@SuppressWarnings("unchecked")
+public class LockFreeQueue<T> implements Queue<T> {
 
     // Internal data and constants
-    AtomicStampedReference<Node[]> headAndTail;
+    AtomicStampedReference<Node<T>[]> headAndTail;
     private static final int HEAD = 0;
     private static final int TAIL = 1;
-    private static final Node[] EMPTY = new Node[]{null, null};
+    private final Node<T>[] EMPTY = new Node[]{null, null};
 
     // Basic constructor
     public LockFreeQueue() {
-        headAndTail = new AtomicStampedReference<Node[]>(EMPTY, 0);
+        headAndTail = new AtomicStampedReference<Node<T>[]>(EMPTY, 0);
     }
 
     // Thread-safe add - Can still succeed if tail isn't linked yet
-    public void add(Object o) {
+    @Override
+    public void add(T item) {
         int[] stampHolder = new int[1];
-        Node[] hnt;
-        Node newNode = new Node(o, null);
+        Node<T>[] hnt;
+        Node<T> newNode = new Node<T>(item, null);
         do {
             hnt = headAndTail.get(stampHolder);
             if(hnt[HEAD] == null && headAndTail.compareAndSet(hnt, new Node[]{newNode, newNode}, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
@@ -33,9 +35,10 @@ public class LockFreeQueue {
     }
 
     // Thread-safe remove
-    public Object remove() {
+    @Override
+    public T remove() {
         int[] stampHolder = new int[1];
-        Node[] hnt;
+        Node<T>[] hnt;
         do {
             hnt = headAndTail.get(stampHolder);
             if(hnt[HEAD] == null)
@@ -51,11 +54,13 @@ public class LockFreeQueue {
     }
 
     // Thread-safe element - Atomic at the point of reading
-    public Object element() {
+    @Override
+    public T element() {
         return headAndTail.getReference()[HEAD].get(); // null if empty queue
     }
 
     // Atomic at the point of reading
+    @Override
     public boolean isEmpty() {
         return headAndTail.getReference()[HEAD] == null;
     }

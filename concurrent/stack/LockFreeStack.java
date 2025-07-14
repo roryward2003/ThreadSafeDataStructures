@@ -5,37 +5,39 @@ import concurrent.node.Node;
 
 // Thread-safe stack implementation using lock free synchronization
 
-public class LockFreeStack {
+public class LockFreeStack<T> implements Stack<T> {
 
     // Internal data
-    private AtomicStampedReference<Node> top;
+    private AtomicStampedReference<Node<T>> top;
 
     // Basic constructor
     public LockFreeStack() {
-        top = new AtomicStampedReference<Node>(null, 0);
+        top = new AtomicStampedReference<Node<T>>(null, 0);
     }
 
     // Thread-safe pop
-    public Object pop() {
+    @Override
+    public T pop() {
         int[] stampHolder = new int[1];
-        Node expected;
+        Node<T> expected;
         if((expected = top.get(stampHolder)) == null) { return null; } // Return null if stack empty
         
         // Use CAS logic to atomically update the top of the stack and stamp
         while(!top.compareAndSet(expected, expected.getNext(), stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-            expected = top.get(stampHolder);
+            if((expected = top.get(stampHolder)) == null) return null; // Return null if stack empty
 
         return expected.get();
     }
 
     // Thread-safe push
-    public void push(Object o) {
+    @Override
+    public void push(T o) {
         int[] stampHolder = new int[1];
-        Node expected;
-        Node newTop = new Node(o, (expected = top.get(stampHolder)));
+        Node<T> expected;
+        Node<T> newTop = new Node<T>(o, (expected = top.get(stampHolder)));
 
         // Use CAS logic to atomically update the top of the stack and stamp
         while(!top.compareAndSet(expected, newTop, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-            newTop = new Node(o, (expected = top.get(stampHolder)));
+            newTop = new Node<T>(o, (expected = top.get(stampHolder)));
     }
 }

@@ -3,35 +3,41 @@ import concurrent.node.Node;
 
 // Thread-safe set implementation using coarse grained blocking synchronization
 
-public class CoarseBlockingSet {
+public class CoarseBlockingSet<T> implements Set<T>{
 
     // Internal data
-    private Node head;
+    private Node<T> head;
+    private int size;
 
     // Basic constructor
     public CoarseBlockingSet() {
         head = null;
+        size = 0;
     }
 
     // Thread-safe add
-    public synchronized boolean add(Object o) {
-        if (contains(o))
+    @Override
+    public synchronized boolean add(T item) {
+        if (contains(item))
             return false;
-        head = new Node(o, head);                // Prepend o
+        head = new Node<T>(item, head);                // Prepend o
+        size++;
         return true;
     }
 
     // Thread-safe remove
-    public synchronized boolean remove(Object o) {
-        Node curr = head;
-        Node prev = null;
-        if(o == null) {                          // If o is null, use "=="
+    @Override
+    public synchronized boolean remove(T item) {
+        Node<T> curr = head;
+        Node<T> prev = null;
+        if(item == null) {                          // If o is null, use "=="
             while (curr != null) {
                 if (curr.get() == null) {
                     if (prev == null)
                         head = curr.getNext();   // Head removal
                     else
                         prev.setNext(curr.getNext());
+                    size--;
                     return true;
                 }
                 prev = curr;
@@ -39,11 +45,12 @@ public class CoarseBlockingSet {
             }
         } else {                                 // If o is not null, use ".equals()"
             while (curr != null) {
-                if (curr.get().equals(o)) {
+                if (curr.get().equals(item)) {
                     if (prev == null)
                         head = curr.getNext();   // Head removal
                     else
                         prev.setNext(curr.getNext());
+                    size--;
                     return true;
                 }
                 prev = curr;
@@ -54,9 +61,10 @@ public class CoarseBlockingSet {
     }
 
     // Thread-safe search
-    public synchronized boolean contains(Object o) {
-        Node curr = head;
-        if(o == null) {                          // If o is null, use "=="
+    @Override
+    public synchronized boolean contains(T item) {
+        Node<T> curr = head;
+        if(item == null) {                          // If o is null, use "=="
             while(curr != null) {
                 if(curr.get() == null)
                     return true;
@@ -64,7 +72,7 @@ public class CoarseBlockingSet {
             }
         } else {                                 // If o is not null, use ".equals()"
             while(curr != null) {
-                if(curr.get().equals(o))
+                if(curr.get().equals(item))
                     return true;
                 curr = curr.getNext();
             }
@@ -73,7 +81,14 @@ public class CoarseBlockingSet {
     }
 
     // Thread-safe empty check
+    @Override
     public synchronized boolean isEmpty() {
         return head == null;
+    }
+
+    // Thread-safe size check
+    @Override
+    public synchronized int size() {
+        return size;
     }
 }

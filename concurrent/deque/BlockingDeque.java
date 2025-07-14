@@ -3,11 +3,12 @@ import concurrent.node.Node;
 
 // Thread-safe FIFO queue implementation using blocking synchronization
 
-public class BlockingDeque {
+public class BlockingDeque<T> implements Deque<T> {
 
     // Internal data
-    private Node head;
-    private Node tail;
+    private Node<T> head;
+    private Node<T> tail;
+    private int size;
 
     // Basic constructor
     public BlockingDeque() {
@@ -16,29 +17,34 @@ public class BlockingDeque {
     }
 
     // Add an object to the front of the deque
-    public synchronized void addFirst(Object o) {
+    @Override
+    public synchronized void addFirst(T item) {
         if(isEmpty()) {
-            head = tail = new Node(o, null, null);
+            head = tail = new Node<T>(item, null, null);
         } else {
-            head = new Node(o, head, null);
+            head = new Node<T>(item, head, null);
             head.getNext().setPrev(head);
         }
+        size++;
         notifyAll(); // Wake any threads waiting for an addition
     }
 
     // Add an object to the back of the deque
-    public synchronized void addLast(Object o) {
+    @Override
+    public synchronized void addLast(T item) {
         if(isEmpty()) {
-            head = tail = new Node(o, null, null);
+            head = tail = new Node<T>(item, null, null);
         } else {
-            tail = new Node(o, null, tail);
+            tail = new Node<T>(item, null, tail);
             tail.getPrev().setNext(tail);
         }
+        size++;
         notifyAll(); // Wake any threads waiting for an addition
     }
 
     // Remove the object at the front of the deque
-    public synchronized Object removeFirst() {
+    @Override
+    public synchronized T removeFirst() {
         while(isEmpty()) {
             try {
                 wait(); // Wait until there is an object to remove
@@ -48,18 +54,20 @@ public class BlockingDeque {
             }
         }
 
-        Node oldHead = head;
+        Node<T> oldHead = head;
         head = head.getNext();
         if(isEmpty()) {
             tail = null; // If deque is now empty, make the tail null
         } else {
             head.setPrev(null);
         }
+        size--;
         return oldHead.get();
     }
 
     // Remove the object at the back of the deque
-    public synchronized Object removeLast() {
+    @Override
+    public synchronized T removeLast() {
         while(isEmpty()) {
             try {
                 wait(); // Wait until there is an object to remove
@@ -69,18 +77,20 @@ public class BlockingDeque {
             }
         }
 
-        Node oldTail = tail;
+        Node<T> oldTail = tail;
         tail = tail.getPrev();
         if(isEmpty()) {
             head = null; // If deque is now empty, make the head null
         } else {
             tail.setNext(null);
         }
+        size--;
         return oldTail.get();
     }
 
     // Get, but do not remove, the object at the front of the deque
-    public synchronized Object getFirst() {
+    @Override
+    public synchronized T getFirst() {
         while(isEmpty()) {
             try {
                 wait();
@@ -93,7 +103,8 @@ public class BlockingDeque {
     }
 
     // Get, but do not remove, the object at the back of the deque
-    public synchronized Object getLast() {
+    @Override
+    public synchronized T getLast() {
         while(isEmpty()) {
             try {
                 wait();
@@ -106,7 +117,14 @@ public class BlockingDeque {
     }
 
     // Helper method for readability of code and ease of simulation
+    @Override
     public synchronized boolean isEmpty() {
         return head == null || tail == null;
+    }
+
+    // Helper method for retrieving deque size
+    @Override
+    public int size() {
+        return size;
     }
 }

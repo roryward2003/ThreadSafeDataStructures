@@ -21,7 +21,7 @@ run_all:
 	$(MAKE) run_barrier && $(MAKE) run_ll    && $(MAKE) run_set   && $(MAKE) run_hashtable
 	
 run_array:     ; java concurrent/array/ArraySimulation 15 5000
-run_stack:     ; java concurrent/stack/StackSimulation 15 1000000
+run_stack:     ; java concurrent/stack/StackSimulation 80 1000000
 run_queue:     ; java concurrent/queue/QueueSimulation 60 1000000
 run_deque:     ; java concurrent/deque/DequeSimulation 60 100000
 run_barrier:   ; java concurrent/barrier/BarrierSimulation 10 10000
@@ -31,3 +31,7 @@ run_hashtable: ; java concurrent/hashtable/HashTableSimulation 40 10000
 
 # Tools
 clean:         ; rm -rf concurrent/*/*.class *.zip
+zip_preedit:   ; zip -r preedit.zip . -x '*.git*'
+zip_beetle:    ; zip -r beetle_postedit.zip . -x '*.git*'
+zip_sonnet:    ; zip -r sonnet_postedit.zip . -x '*.git*'
+zip_rewrite:   ; zip -r rewrite.zip . -x '*.git*'

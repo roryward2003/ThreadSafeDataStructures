@@ -3,25 +3,25 @@ import java.util.concurrent.atomic.AtomicMarkableReference;
 
 // Node helper class for building lock free linked list implementations
 
-public class LockFreeKeyNode {
+public class LockFreeKeyNode<T> {
 
     // Internal data
     private final Object o;
     private final int key;
-    private final AtomicMarkableReference<LockFreeKeyNode> next;
+    private final AtomicMarkableReference<LockFreeKeyNode<T>> next;
 
     // Basic constructor for Singly Linked List
-    public LockFreeKeyNode(Object o, LockFreeKeyNode next) {
+    public LockFreeKeyNode(Object o, LockFreeKeyNode<T> next) {
         this.o    = o;
         this.key  = o.hashCode();
-        this.next = new AtomicMarkableReference<LockFreeKeyNode>(next, false);
+        this.next = new AtomicMarkableReference<LockFreeKeyNode<T>>(next, false);
     }
 
     // Alternate constructor for selecting a key
-    public LockFreeKeyNode(Object o, LockFreeKeyNode next, int key) {
+    public LockFreeKeyNode(Object o, LockFreeKeyNode<T> next, int key) {
         this.o    = o;
         this.key  = key;
-        this.next = new AtomicMarkableReference<LockFreeKeyNode>(next, false);
+        this.next = new AtomicMarkableReference<LockFreeKeyNode<T>>(next, false);
     }
 
     // Get Object o
@@ -31,12 +31,12 @@ public class LockFreeKeyNode {
     public int getKey() { return key; }
 
     // Get and Set next Node
-    public LockFreeKeyNode getNext(boolean[] markHolder) { return next.get(markHolder); }
-    public LockFreeKeyNode getNextReference() { return next.getReference(); }
-    public void setNext(LockFreeKeyNode newNode, boolean newMark) { this.next.set(newNode, newMark); }
+    public LockFreeKeyNode<T> getNext(boolean[] markHolder) { return next.get(markHolder); }
+    public LockFreeKeyNode<T> getNextReference() { return next.getReference(); }
+    public void setNext(LockFreeKeyNode<T> newNode, boolean newMark) { this.next.set(newNode, newMark); }
     
     // Compare and set next Node
-    public boolean compareAndSetNext(LockFreeKeyNode expected, LockFreeKeyNode newNode, boolean expectedMark, boolean mark) {
+    public boolean compareAndSetNext(LockFreeKeyNode<T> expected, LockFreeKeyNode<T> newNode, boolean expectedMark, boolean mark) {
         return this.next.compareAndSet(expected, newNode, expectedMark, mark);
     }
     

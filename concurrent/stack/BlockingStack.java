@@ -3,10 +3,10 @@ import concurrent.node.Node;
 
 // Thread-safe stack implementation using blocking synchronization
 
-public class BlockingStack {
+public class BlockingStack<T> implements Stack<T> {
 
     // Internal data
-    private Node top;
+    private Node<T> top;
 
     // Basic constructor
     public BlockingStack() {
@@ -14,18 +14,20 @@ public class BlockingStack {
     }
 
     // Thread-safe pop
-    public synchronized Object pop() {
+    @Override
+    public synchronized T pop() {
         if(top != null) {
-            Object o = top.get();
-            top      = top.getNext();
-            return o;
+            T item = top.get();
+            top    = top.getNext();
+            return item;
         }
         return null;
     }
 
     // Thread-safe push
-    public synchronized void push(Object o) {
-        Node n = new Node(o, top);
-        top    = n;
+    @Override
+    public synchronized void push(T item) {
+        Node<T> n = new Node<T>(item, top);
+        top       = n;
     }
 }

@@ -1,5 +1,6 @@
 package concurrent.set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // Driver class for testing my set implementations
 
@@ -7,30 +8,49 @@ public class SetSimulation {
 
     public static void main(String[] args) {
 
+        // Constants
+        final int NUM_THREADS        = 4;
+        final int NUM_UNIQUE_OBJECTS = 500;
+        final int DEADLOCK_TIMEOUT   = 5000;
+
         // Local vars for timing and input params
         long timeBefore, timeAfter;
+        boolean deadlocked = false;
         int k = Integer.parseInt(args[0]);
         int m = Integer.parseInt(args[1]);
 
         // Initialise two four-thread arrays, to test the blocking and lock free implementations
-        CoarseBlockingSet coarseBlockingSet = new CoarseBlockingSet();
-        FineBlockingSet fineBlockingSet     = new FineBlockingSet();
-        LockFreeSet lockFreeSet             = new LockFreeSet();
-        StringBuilder[] logsA               = new StringBuilder[4];
-        StringBuilder[] logsB               = new StringBuilder[4];
-        StringBuilder[] logsC               = new StringBuilder[4];
-        Thread[] tA                         = new Thread[4];
-        Thread[] tB                         = new Thread[4];
-        Thread[] tC                         = new Thread[4];
+        CoarseBlockingSet<Object> coarseBlockingSet = new CoarseBlockingSet<Object>();
+        FineBlockingSet<Object> fineBlockingSet     = new FineBlockingSet<Object>();
+        LockFreeSet<Object> lockFreeSet             = new LockFreeSet<Object>();
 
-        for (int i = 0; i < 4; i++) {
-            logsA[i] = new StringBuilder();
-            logsB[i] = new StringBuilder();
-            logsC[i] = new StringBuilder();
-            tA[i]    = new Thread(new CoarseBlockingSetTester(coarseBlockingSet, k, m, logsA[i]));
-            tB[i]    = new Thread(new FineBlockingSetTester(fineBlockingSet, k, m, logsB[i]));
-            tC[i]    = new Thread(new LockFreeSetTester(lockFreeSet, k, m, logsC[i]));
+        // Initialise a pool discrete pool of objects for simulating set usage
+        Object[] uniqueObjects = new Object[NUM_UNIQUE_OBJECTS];
+        for(int i=0; i<NUM_UNIQUE_OBJECTS; i++) {
+            uniqueObjects[i] = new Object();
         }
+
+        // Initialise the thread arrays and results objects
+        SimResults rA = new SimResults("Coarse Blocking Set");
+        SimResults rB = new SimResults("Fine Blocking Set");
+        SimResults rC = new SimResults("Lock Free Set");
+        Thread[] tA   = new Thread[NUM_THREADS];
+        Thread[] tB   = new Thread[NUM_THREADS];
+        Thread[] tC   = new Thread[NUM_THREADS];
+
+        // Instantiate the threads in each thread array
+        for (int i = 0; i < NUM_THREADS; i++) {
+            tA[i] = new Thread(new SetTester<Object>(coarseBlockingSet, k, m, rA, uniqueObjects));
+            tB[i] = new Thread(new SetTester<Object>(fineBlockingSet, k, m, rB, uniqueObjects));
+            tC[i] = new Thread(new SetTester<Object>(lockFreeSet, k, m, rC, uniqueObjects));
+        }
+
+        // Print starting info
+        System.out.printf("%d threads\n", NUM_THREADS);
+        System.out.printf("%d operations per thread\n", m);
+        System.out.printf("%d%% chance of search\n", k);
+        System.out.printf("%d%% chance of insertion\n", (100-k)/2);
+        System.out.printf("%d%% chance of retrieval\n\n", (100-k)/2);
 
         // Time the execution of all threads in tA
         timeBefore = System.currentTimeMillis();
@@ -38,184 +58,175 @@ public class SetSimulation {
             t.start();
         for (Thread t : tA) {
             try {
-                t.join();
+                if(!deadlocked)
+                    t.join(DEADLOCK_TIMEOUT);
+                if (t.isAlive()) {
+                    deadlocked = true;
+                    t.interrupt();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        timeAfter = System.currentTimeMillis();
-        for (StringBuilder log : logsA)
-            System.out.println(log);
-        System.out.println("CoarseBlockingSet execution time: " + (timeAfter - timeBefore) + "ms");
 
-        // Time the execution of all threads in tB
+        if(!deadlocked) {
+            // Stop timer and print logs
+            timeAfter = System.currentTimeMillis();
+            rA.actualSize.set(coarseBlockingSet.size());
+            rA.expectedSize.addAndGet(rA.successfulInsertions.get() - rA.successfulRetrievals.get());
+            rA.executionTime.set((int)(timeAfter - timeBefore));
+            rA.printInfo();
+        } else {
+            deadlocked = false;
+            System.out.printf("Deadlock detected, forcing continuation\n\n");
+        }
+
+        // Time execution of all threads in tB
         timeBefore = System.currentTimeMillis();
         for (Thread t : tB)
             t.start();
         for (Thread t : tB) {
             try {
-                t.join();
+                if(!deadlocked)
+                    t.join(DEADLOCK_TIMEOUT);
+                if (t.isAlive()) {
+                    deadlocked = true;
+                    t.interrupt();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        timeAfter = System.currentTimeMillis();
-        for (StringBuilder log : logsB)
-            System.out.println(log);
-        System.out.println("FineBlockingSet execution time: " + (timeAfter - timeBefore) + "ms");
+
+        if(!deadlocked) {
+            // Stop timer and print logs
+            timeAfter = System.currentTimeMillis();
+            rB.actualSize.set(fineBlockingSet.size());
+            rB.expectedSize.addAndGet(rB.successfulInsertions.get() - rB.successfulRetrievals.get());
+            rB.executionTime.set((int)(timeAfter - timeBefore));
+            rB.printInfo();
+        } else {
+            deadlocked = false;
+            System.out.printf("Deadlock detected, forcing continuation\n\n");
+        }
 
         // Time the execution of all threads in tC
+        timeBefore = System.currentTimeMillis();
         timeBefore = System.currentTimeMillis();
         for (Thread t : tC)
             t.start();
         for (Thread t : tC) {
             try {
-                t.join();
+                if(!deadlocked)
+                    t.join(DEADLOCK_TIMEOUT);
+                if (t.isAlive()) {
+                    deadlocked = true;
+                    t.interrupt();
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        timeAfter = System.currentTimeMillis();
-        for (StringBuilder log : logsC)
-            System.out.println(log);
-        System.out.println("LockFreeSet execution time: " + (timeAfter - timeBefore) + "ms");
+
+        if(!deadlocked) {
+            // Stop timer and print logs
+            timeAfter = System.currentTimeMillis();
+            rC.actualSize.set(lockFreeSet.size());
+            rC.expectedSize.addAndGet(rC.successfulInsertions.get() - rC.successfulRetrievals.get());
+            rC.executionTime.set((int)(timeAfter - timeBefore));
+            rC.printInfo();
+        } else {
+            deadlocked = false;
+            System.out.printf("Deadlock detected, forcing continuation\n\n");
+        }
     }
 }
 
-// This class tests a CoarseBlockingSet implementation
-class CoarseBlockingSetTester implements Runnable {
-
+// This class tests a Set implementation
+class SetTester<T> implements Runnable {
+    
     // Private variables
-    private CoarseBlockingSet set;
+    private Set<T> set;
     private ThreadLocalRandom rng;
     private int k;
     private int m;
-    private StringBuilder log;
+    private SimResults results;
+    Object[] uniqueObjects;
 
     // Basic constructor with shared CoarseBlockingSet reference
-    public CoarseBlockingSetTester(CoarseBlockingSet set, int k, int m, StringBuilder log) {
-        this.set = set;
-        this.rng = ThreadLocalRandom.current();
-        this.k   = k;
-        this.m   = m;
-        this.log = log;
+    public SetTester(Set<T> set, int k, int m, SimResults results, Object[] uniqueObjects) {
+        this.set           = set;
+        this.rng           = ThreadLocalRandom.current();
+        this.k             = k;
+        this.m             = m;
+        this.results       = results;
+        this.uniqueObjects = uniqueObjects;
     }
 
     // Threads constructed using this runnable implementation will simulate usage as below
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
-        int insertions = 0;
-        int retrievals = 0;
-        int searches   = 0;
         for (int i = 0; i < m; i++) {
             if (rng.nextInt(100) >= k) {
-                set.contains(new Object());                // Contains
-                searches++;
+                set.contains((T)uniqueObjects[rng.nextInt(uniqueObjects.length)]);      // Contains
+                results.numSearches.incrementAndGet();
             } else {
                 if (rng.nextBoolean()) {
-                    set.add(new Object());                 // Add
-                    insertions++;
+                    if(set.add((T)uniqueObjects[rng.nextInt(uniqueObjects.length)]))    // Add
+                        results.successfulInsertions.incrementAndGet();
+                    else
+                        results.failedInsertions.incrementAndGet();
                 } else {
-                    set.remove(new Object());              // Remove
-                    retrievals++;
+                    if(set.remove((T)uniqueObjects[rng.nextInt(uniqueObjects.length)])) // Remove
+                        results.successfulRetrievals.incrementAndGet();
+                    else
+                        results.failedRetrievals.incrementAndGet();
                 }
             }
         }
-        log.append("Thread ").append(Thread.currentThread().threadId()).append(": ")
-            .append(insertions).append(" insertions, ")
-            .append(retrievals).append(" retrievals, ")
-            .append(searches).append(" searches");
     }
 }
 
-// This class tests a FineBlockingSet implementation
-class FineBlockingSetTester implements Runnable {
+// Helper class for returning simulation results
+class SimResults {
+    public String name;
+    public AtomicInteger successfulInsertions;
+    public AtomicInteger failedInsertions;
+    public AtomicInteger successfulRetrievals;
+    public AtomicInteger failedRetrievals;
+    public AtomicInteger numSearches;
+    public AtomicInteger actualSize;
+    public AtomicInteger expectedSize;
+    public AtomicInteger descrepancies;
+    public AtomicInteger executionTime;
 
-    // Private variables
-    private FineBlockingSet set;
-    private ThreadLocalRandom rng;
-    private int k;
-    private int m;
-    private StringBuilder log;
+    // Basic constructor
+    public SimResults(String name) {
+        // Set name
+        this.name = name;
 
-    // Basic constructor with shared FineBlockingSet reference
-    public FineBlockingSetTester(FineBlockingSet set, int k, int m, StringBuilder log) {
-        this.set = set;
-        this.rng = ThreadLocalRandom.current();
-        this.k   = k;
-        this.m   = m;
-        this.log = log;
+        // Init all results to 0
+        this.successfulInsertions = new AtomicInteger(0);
+        this.failedInsertions     = new AtomicInteger(0);
+        this.successfulRetrievals = new AtomicInteger(0);
+        this.failedRetrievals     = new AtomicInteger(0);
+        this.numSearches          = new AtomicInteger(0);
+        this.actualSize           = new AtomicInteger(0);
+        this.expectedSize         = new AtomicInteger(0);
+        this.descrepancies        = new AtomicInteger(0);
+        this.executionTime        = new AtomicInteger(0);
     }
 
-    // Threads constructed using this runnable implementation will simulate usage as below
-    @Override
-    public void run() {
-        int insertions = 0;
-        int retrievals = 0;
-        int searches   = 0;
-        for (int i = 0; i < m; i++) {
-            if (rng.nextInt(100) >= k) {
-                set.contains(new Object());                // Contains
-                searches++;
-            } else {
-                if (rng.nextBoolean()) {
-                    set.add(new Object());                 // Add
-                    insertions++;
-                } else {
-                    set.remove(new Object());              // Remove
-                    retrievals++;
-                }
-            }
-        }
-        log.append("Thread ").append(Thread.currentThread().threadId()).append(": ")
-            .append(insertions).append(" insertions, ")
-            .append(retrievals).append(" retrievals, ")
-            .append(searches).append(" searches");
-    }
-}
-
-// This class tests a LockFreeSet implementation
-class LockFreeSetTester implements Runnable {
-
-    // Private variables
-    private LockFreeSet set;
-    private ThreadLocalRandom rng;
-    private int k;
-    private int m;
-    private StringBuilder log;
-
-    // Basic constructor with shared LockFreeSet reference
-    public LockFreeSetTester(LockFreeSet set, int k, int m, StringBuilder log) {
-        this.set = set;
-        this.rng = ThreadLocalRandom.current();
-        this.k   = k;
-        this.m   = m;
-        this.log = log;
-    }
-
-    // Threads constructed using this runnable implementation will simulate usage as below
-    @Override
-    public void run() {
-        int insertions = 0;
-        int retrievals = 0;
-        int searches   = 0;
-        for (int i = 0; i < m; i++) {
-            if (rng.nextInt(100) >= k) {
-                set.contains(new Object());                // Contains
-                searches++;
-            } else {
-                if (rng.nextBoolean()) {
-                    set.add(new Object());                 // Add
-                    insertions++;
-                } else {
-                    set.remove(new Object());              // Remove
-                    retrievals++;
-                }
-            }
-        }
-        log.append("Thread ").append(Thread.currentThread().threadId()).append(": ")
-            .append(insertions).append(" insertions, ")
-            .append(retrievals).append(" retrievals, ")
-            .append(searches).append(" searches");
+    public void printInfo() {
+        System.out.printf("<< %s >>\n\n", name);
+        System.out.printf("Execution time: %d\n", executionTime.get());
+        System.out.printf("Successful insertions: %d\n", successfulInsertions.get());
+        System.out.printf("Failed insertions: %d\n", failedInsertions.get());
+        System.out.printf("Successful retrievals: %d\n", successfulRetrievals.get());
+        System.out.printf("Failed retrievals: %d\n", failedRetrievals.get());
+        System.out.printf("Expected final size: %d\n", expectedSize.get());
+        System.out.printf("Actual final size: %d\n", actualSize.get());
+        System.out.printf("Discrepancies detected: %d\n\n", Math.abs(actualSize.get()-expectedSize.get()));
     }
 }

@@ -1,6 +1,6 @@
 # ResizableArray
 
-## Usage
+### Usage
 
     cd src/ResizableArray
     javac ResizableArraySimulation.java
@@ -10,7 +10,7 @@
     This will output the execution time for both atomic Array structures,
     each tested using 4 threads.
 
-##  BlockingResizableArray implementation
+####  BlockingResizableArray implementation
 
     My BlockingResizableArray implementation is very straightforward and requires o(n)
     data for synchronization. More specifically it requires O(log(n)) ReentrantLocks,
@@ -28,7 +28,7 @@
     frequent as the array grows. There are also only log(n) locks to copy even when
     this does occur.
 
-## LockFreeResizableArray implementation
+#### LockFreeResizableArray implementation
 
     My LockFreeResizableArray implementation has a few little complexities to it, but
     shouldn't be too hard to follow. The array is stored as AtomicStampedReference<Object[]>
@@ -52,7 +52,7 @@
 
 # Stack
 
-## Usage
+### Usage
 
     cd src/Stack
     javac StackSimulation.java
@@ -62,7 +62,7 @@
     This will output the execution time for both atomic Stack structures,
     each tested using 4 threads.
 
-## BlockingStack implementation
+#### BlockingStack implementation
 
     My BlockingStack implementation is very straightforward. It simply synchronizes push
     and pop operations on the same object so that they appear atomic to all other threads.
@@ -70,7 +70,7 @@
     about. The efficiency is strong in pretty much all scenarios as there is not much
     overhead involved in the locking process.
 
-## LockFreeStack implementation
+#### LockFreeStack implementation
 
     My LockFreeStack implementation is a little more nuanced, but still pretty easy to
     follow. Similarly to the ResizableArray above, I've used a StampedAtomicReference here,
@@ -83,7 +83,7 @@
 
 # Queue
 
-## Usage
+### Usage
 
     cd src/Queue
     javac QueueSimulation.java
@@ -94,7 +94,7 @@
     each tested using 4 threads. If remove/element is chosen there is
     then a 50/50 chance to choose either remove or element.
 
-## BlockingQueue implementation
+#### BlockingQueue implementation
 
     This blocking queue implementation simply synchronizes on add, remove and element
     methods in order to ensure atomicity. Remove and Element methods will block by
@@ -106,7 +106,7 @@
     that is the best we can really do for a queue as it is an inherently sequential
     data structure.
 
-## LockFreeQueue implementation
+#### LockFreeQueue implementation
 
     This non-blocking queue implementation is complex but elegant. The head and tail
     Nodes are stored as an AtomicStampableReference<Node[]> where arr[0] = head and
@@ -118,9 +118,9 @@
     even when all elements are lagged, but removals must wait until at least head.next()
     has at least been linked in correctly.
 
-# Queue
+# Deque
 
-## Usage
+### Usage
 
     cd src/Deque
     javac DequeSimulation.java
@@ -132,7 +132,7 @@
     either the front or back of the deque. If remove is chosen there is a
     50/50 chance of using element or remove.
 
-## BlockingDeque implementation
+#### BlockingDeque implementation
 
     This BlockingDeque implementation is very straightforward and almost identical to
     the BlockingQueue implementation, except that it uses a doubly-linked list instead
@@ -140,39 +140,22 @@
     Remove() and Get() methods block on an empty deque and will sleep until notified
     by an Add() call.
 
-## LockFreeDeque implementation
+#### LockFreeDeque implementation
 
     This LockFreeDeque implementation has quite a few complexities to it, but is robust
-    in the face of tail lag, head lag, the ABA problem and any standard data races that
+    in the face of tail lag, head lag, the ABA problem and any other data races that
     could occur between additions, removals and gets at either end of the queue. The
     deque uses a doubly-linked list structure to implement O(1) operations. The CAS
-    primitive is used with stamped references to atomically update both the refernces
-    and version numbers.
+    primitive is used with an atomic mark boolean to atomically update the references
+    from the sentinel nodes. Marked nodes are cleaned up elegantly by other threads.
 
-    Of course, the problems arise when changes to the head and tail must also appear to
-    atomically update the .prev and .next references of the adjacent nodes respectively.
-    This is impossible with standard CAS operations, so the solution is update the tail
-    or head atomically first, and then update the links accordingly. Other threads will
-    see this partial state, and must be able to recognise is and fail their CAS operations
-    until the node they need is linked in correctly. This is certainly not wait-free but
-    is lock-free and immune to data races. This forced failure is encapsulated by the
-    rather complex conditional statements in the loop conditions of both remove() ops.
-    
-    The beauty of this approach is that the add operations do not need to worry about
-    this, because they can continue to add on as soon as the tail or head are updated
-    even if they are not linked correctly. The remove operations will also only need
-    to force fail their CAS is the current head or tail are lagging, but can continue
-    on if any other internal node is lagging. This approach still squeezes out good
-    efficiency thanks to this fact, whilst remaining robust to all data races.
-
-    Another nice little trick that I have employed here is storing the head and tail
-    under the same atomic reference. This way, the change between non-empty and empty
-    states in either direction appears atomic, and thus threads can always rely on the
-    assumption that if head == null then tail is also null.
+    Two stage linking of newly added nodes is handled seamlessly by allowing other
+    threads to work around partially linked nodes, but not directly on them, and then
+    catching up to their changes when making the second link.
 
 # Barrier
 
-## Usage
+### Usage
 
     cd src/Barrier
     javac BarrierSimulation.java
@@ -182,14 +165,14 @@
     This will output the execution time for both atomic Barrier structures,
     each tested using t threads.
 
-## BlockingBarrier implementation
+#### BlockingBarrier implementation
 
     This BlockingBarrier is a sense reversing n-thread reusable barrier. The arrive()
     method is synchronised and wait() & notifyAll() are used to ensure there is no
     busy waiting. The constantly inverting phase allows threads to differentiate
     between subsequent barrier reuses and thus prevents starvation and data races.
 
-## LockFreeBarrier implementation
+#### LockFreeBarrier implementation
 
     This LockFreeBarrier is also a sense reversing n-thread reusable barrier, but it
     is far more efficient than the blocking version. It very simply uses an atomic
@@ -205,7 +188,7 @@
 
 # Linked List
 
-## Usage
+### Usage
 
     cd src/LinkedList
     javac LLSimulation.java
@@ -217,7 +200,7 @@
     If removal is chosen there is a 50/50 chance for remove or get, and similarly
     if insertion is chosen there is a 50/50 chance of indexed insertion and append.
 
-## BlockingLL implementation
+#### BlockingLL implementation
 
     This BlockingLL is very straightforward. The head, tail and size are all tracked
     to allow for O(1) appends and size check as well as O(n) worst case for searching,
@@ -226,7 +209,7 @@
     in parallel. This is a very coarse-grained approach that allows for no paralellism
     and thus is very inefficient, but it is extremely easy to reason about.
 
-## LockFreeLL implementation
+#### LockFreeLL implementation
 
     This LockFreeLL implementation is very difficult to reason about if you are not
     well versed in lock-free data strutcure design. Essentially, I have used Harris's
@@ -239,7 +222,7 @@
 
 # Set
 
-## Usage
+### Usage
 
     cd src/Set
     javac SetSimulation.java
@@ -253,7 +236,7 @@
     a (k/2)% chance of insertion and a (k/2)% chance of retrieval. Typical real world
     set usage is about 80% search biased.
 
-## CoarseBlockingSet implementation
+#### CoarseBlockingSet implementation
 
     This blocking set uses a coarse grained blocking approach. All additions, removals
     and searches just lock on the set object itself using the synchronized keyword. This
@@ -261,14 +244,28 @@
     safety by completely eliminating the potential for data races to occur. Null is
     treated the same as any other obhect in that it can be added, but only once.
 
-## FineBlockingSet implementation
+#### FineBlockingSet implementation
 
-    This blocking set uses a fine grained blocking approach. Each node in the set has
-    its own ReentrantLock object. This allows traversing threads to use "hand-over-hand"
-    locking to safely traverse the list. Additions and removals are guarded by holding
-    both the previous and next nodes.
+    This blocking set uses a fine grained blocking approach with "hand over hand" locking
+    on all traversals. Atomicity is guaranteed by maintaining a sorted list internal
+    structure, where elements are sorted by their hashcode. This way insertions, removals
+    and searches will all localize to one place for a given element, and as long as operations
+    are guarded by the locks either side of this location then atomicity is guaranteed.
 
-## LockFreeSet implementation
+    Importantly, collisions in hashcodes can and will occur, and is resolved by iterating over
+    key matches when needed, and inserting after the last key match currently in the set.
+    This approach allows for much greater parallelism than the coarse grained blocking version
+    becuase multiple threads can traverse the list, only locking at most two nodes at a time.
+    The tradeoff is complexity, as this version is much harder to reason about than the coarse
+    grained version. Similarly, the capacity for parallelism is lower than the lock free version,
+    but this lock free version is immensely more difficult to reason about and understand.
+
+    This approach is a nice balance of simplicity, elegance and parallelism, but it does involve
+    a large amount of locking overhead which comes with an efficiency cost. Thus this approach
+    shines brightest under high contention, when its parallelism can be exploited, and may
+    struggle to match the coarse grained version's execution speeds under low contention.
+
+#### LockFreeSet implementation
 
     This lock free set implementation maintains a sorted linked list internal structure
     with sentinel head and tail nodes. Nodes are sorted by the hashcode of their object,
@@ -285,7 +282,7 @@
 
 # HashTable
 
-## Usage
+### Usage
 
     cd src/HashTable
     javac HashTableSimulation.java
@@ -296,14 +293,14 @@
     using 4 threads. Each operation has a k% chance of being an insertion. If this is not
     chosen there is a 50/50 chance for removal or retrieval.
 
-## CoarseBlockingHashTable implementation
+#### CoarseBlockingHashTable implementation
 
     This blocking hash table implementation is pretty straightforward as it only uses one
     lock to guard all hash table accesses. This is achieved by synchronizing all methods on
     the hash table object itself using the synchronized keyword. The hash table starts with
     an initial size of 16 buckets and doubles in size whenever the load factor exceeds 0.75.
 
-## FineBlockingHashTable implementation
+#### FineBlockingHashTable implementation
 
     This blocking hash table implementation is a little more complicated as it uses N+1 locks
     for N buckets. One lock for each bucket, plus a sizeLock for the size related operations;
@@ -319,6 +316,6 @@
     to the lock they acquired because they will no longer be able to locate it using hashing if
     the table has been resized, and as such they would not be able to unlock it.
 
-## LockFreeHashTable implementation
+#### LockFreeHashTable implementation
 
     // TODO

@@ -1,79 +1,152 @@
+// concurrent/set/FineBlockingSet.java
 package concurrent.set;
-import concurrent.node.LockableNode;
+import concurrent.node.LockableKeyNode;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // Thread-safe set implementation using fine grained blocking synchronization
 
-public class FineBlockingSet {
+public class FineBlockingSet<T> implements Set<T> {
 
     // Internal data
-    private LockableNode head;
+    private final LockableKeyNode<T> head, tail;
+    private final AtomicInteger size;
 
-    // Basic constructor
+    // Basic constructor with sentinel head and tail nodes
     public FineBlockingSet() {
-        this.head = new LockableNode(null, null);
+        this.tail = new LockableKeyNode<T>(null, null, Integer.MAX_VALUE);
+        this.head = new LockableKeyNode<T>(null, tail, Integer.MIN_VALUE);
+        this.size = new AtomicInteger(0);
     }
 
-    // Thread safe insertion iff set doesn't contain o
-    public boolean add(Object o) {
-        LockableNode localHead = head;
-        localHead.lock();
-        while (localHead != head) {
-            localHead.unlock();
-            localHead = head;
-            localHead.lock();
-        } // Head is now locked and up to date
+    // Helper class for traversal via hand over hand locking
+    private class Window {
+        final LockableKeyNode<T> prev, curr;
 
-        if (contains(o))
-            return false;
-        
-        head.setNext(new LockableNode(o, localHead.getNext()));
-        localHead.unlock();
+        // Basic constructor
+        Window(LockableKeyNode<T> prev, LockableKeyNode<T> curr) {
+            this.prev = prev;
+            this.curr = curr;
+        }
+    }
+
+    // Helper method to traverse in search of a given key using hand over hand locking
+    private Window find(int key) {
+        LockableKeyNode<T> prev = head;
+        prev.lock();
+        LockableKeyNode<T> curr = prev.getNext();
+        curr.lock();
+
+        // Traverse until curr is the tail node, or the first node with key >= search key
+        while (curr != tail && curr.getKey() < key) {
+            prev.unlock();
+            prev = curr;
+            curr = curr.getNext();
+            curr.lock();
+        }
+        return new Window(prev, curr);
+    }
+
+    // Thread safe insertion iff set doesn't contain item
+    @Override
+    public boolean add(T item) {
+        int key  = (item == null) ? 0 : item.hashCode();
+        Window w = find(key);
+        LockableKeyNode<T> prev = w.prev;
+        LockableKeyNode<T> curr = w.curr;
+
+        // Iterate over key matches, searching for object match
+        while (curr != tail && curr.getKey() == key) {
+            if ((item == null && curr.get() == null) || (item != null && item.equals(curr.get()))) {
+
+                // Element already in the set
+                prev.unlock();
+                curr.unlock();
+                return false;
+            }
+            prev.unlock();
+            prev = curr;
+            curr = curr.getNext();
+            curr.lock();
+        }
+
+        // Insert the new element into the set
+        LockableKeyNode<T> newNode = new LockableKeyNode<T>(item, curr, key);
+        prev.setNext(newNode);
+        prev.unlock();
+        curr.unlock();
+        size.incrementAndGet();
         return true;
     }
 
-    // Thread safe removal iff set contains o via hand over hand locking traversal
-    public boolean remove(Object o) {
-        LockableNode prev = head;
-        prev.lock();
-        LockableNode curr = prev.getNext();
-        while (curr != null) {
-            curr.lock();
-            if (o == null ? curr.get() == null : o.equals(curr.get())) {
+    // Thread safe removal iff set contains item
+    @Override
+    public boolean remove(T item) {
+        int key  = (item == null) ? 0 : item.hashCode();
+        Window w = find(key);
+        LockableKeyNode<T> prev = w.prev;
+        LockableKeyNode<T> curr = w.curr;
+
+        // Iterate over key matches, searching for object match
+        while (curr != tail && curr.getKey() == key) {
+            if ((item == null && curr.get() == null) || (item != null && item.equals(curr.get()))) {
+
+                // Remove element from the set
                 prev.setNext(curr.getNext());
-                curr.unlock();
                 prev.unlock();
+                curr.unlock();
+                size.decrementAndGet();
                 return true;
             }
             prev.unlock();
             prev = curr;
             curr = curr.getNext();
+            curr.lock();
         }
+
+        // Element was not found in the set
         prev.unlock();
-        return false;                            // Return false if not found for removal
+        curr.unlock();
+        return false;
+}
+
+    // Thread safe search
+    @Override
+    public boolean contains(T item) {
+        int key  = (item == null) ? 0 : item.hashCode();
+        Window w = find(key);
+        LockableKeyNode<T> prev = w.prev;
+        LockableKeyNode<T> curr = w.curr;
+        
+        // Iterate over key matches, searching for object match
+        while (curr != tail && curr.getKey() == key) {
+            if ((item == null && curr.get() == null) || (item != null && item.equals(curr.get()))) {
+
+                // Element found
+                prev.unlock();
+                curr.unlock();
+                return true;
+            }
+            prev.unlock();
+            prev = curr;
+            curr = curr.getNext();
+            curr.lock();
+        }
+
+        // Element was not found in the set
+        prev.unlock();
+        curr.unlock();
+        return false;
     }
 
-    // Thread safe search via hand over hand locking traversal
-    public boolean contains(Object o) {
-        LockableNode prev = head;
-        prev.lock();
-        LockableNode curr = prev.getNext();
-        while (curr != null) {
-            curr.lock();
-            if (o == null ? curr.get() == null : o.equals(curr.get())) {
-                curr.unlock();
-                prev.unlock();
-                return true;
-            }
-            prev.unlock();
-            prev = curr;
-            curr = curr.getNext();
-        }
-        prev.unlock();
-        return false;                            // Return false if not found
-    }
-    
     // Thread safe emptiness check
+    @Override
     public synchronized boolean isEmpty() {
-        return head.getNext() == null;
+        return head.getNext() == tail;
+    }
+
+    // Approximate size retrieval. Used for simulation, not under contention.
+    @Override
+    public synchronized int size() {
+        return size.get();
     }
 }

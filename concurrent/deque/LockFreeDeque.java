@@ -1,111 +1,134 @@
 package concurrent.deque;
-import java.util.concurrent.atomic.AtomicStampedReference;
-
-import concurrent.node.Node;
+import concurrent.node.LockFreeNode;
 
 // Thread-safe FIFO queue implementation using lock free synchronization
 
-public class LockFreeDeque {
+public class LockFreeDeque<T> implements Deque<T> {
 
     // Internal data and constants
-    AtomicStampedReference<Node[]> headAndTail;
-    private static final int HEAD = 0;
-    private static final int TAIL = 1;
-    private static final Node[] EMPTY = new Node[]{null, null};
+    private final LockFreeNode<T> sentinelHead;
+    private final LockFreeNode<T> sentinelTail;
 
     // Basic constructor
     public LockFreeDeque() {
-        headAndTail = new AtomicStampedReference<Node[]>(EMPTY, 0);
+        sentinelHead = new LockFreeNode<T>(null, null, null);
+        sentinelTail = new LockFreeNode<T>(null, null, sentinelHead);
+        sentinelHead.setNext(sentinelTail);
     }
 
-    // Thread-safe add - Can still succeed if head isn't linked yet
-    public void addFirst(Object o) {
-        int[] stampHolder = new int[1];
-        Node[] hnt;
-        Node newNode;
-        do {
-            hnt = headAndTail.get(stampHolder);
-            newNode = new Node(o, hnt[HEAD], null);
-            if(hnt[HEAD] == null && headAndTail.compareAndSet(hnt, new Node[]{newNode, newNode}, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-                return;                   // Deque was empty, new node added successfully
+    // Thread-safe add
+    @Override
+    public void addFirst(T item) {
+        LockFreeNode<T> oldHead, newHead;
 
-        } while(!headAndTail.compareAndSet(hnt, new Node[]{newNode, hnt[TAIL]}, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE));
-        hnt[HEAD].setPrev(newNode);       // Deque had one or more elements, new head added successfully
+        do { // Left to Right then Right to Left 
+            oldHead = sentinelHead.getNext();
+
+            // Remove marked nodes
+            while(oldHead.isMarked()) {
+                sentinelHead.compareAndSetNext(oldHead, oldHead.getNext());
+                oldHead = oldHead.getNext();
+            }
+
+            // Insert new node
+            newHead = new LockFreeNode<T>(item, oldHead, sentinelHead);
+        } while (!sentinelHead.compareAndSetNext(oldHead, newHead));
+
+        // Catch up on the opposite link
+        while(oldHead != null && !oldHead.compareAndSetPrev(sentinelHead, newHead)) {
+            oldHead = oldHead.getPrev();
+        }
     }
 
-    // Thread-safe add - Can still succeed if tail isn't linked yet
-    public void addLast(Object o) {
-        int[] stampHolder = new int[1];
-        Node[] hnt;
-        Node newNode;
-        do {
-            hnt = headAndTail.get(stampHolder);
-            newNode = new Node(o, null, hnt[TAIL]);
-            if(hnt[HEAD] == null && headAndTail.compareAndSet(hnt, new Node[]{newNode, newNode}, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-                return;                   // Deque was empty, new node added successfully
+    // Thread-safe add
+    @Override
+    public void addLast(T item) {
+        LockFreeNode<T> oldTail, newTail;
+            
+        do { // Right to Left then Left to Right
+            oldTail = sentinelTail.getPrev();
 
-        } while(!headAndTail.compareAndSet(hnt, new Node[]{hnt[HEAD], newNode}, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE));
-        hnt[TAIL].setNext(newNode);       // Deque had one or more elements, new tail added successfully
+            // Remove marked nodes
+            while(oldTail.isMarked()) {
+                sentinelTail.compareAndSetPrev(oldTail, oldTail.getPrev());
+                oldTail = oldTail.getPrev();
+            }
+
+            // Insert new node
+            newTail = new LockFreeNode<T>(item, sentinelTail, oldTail);
+        } while (!sentinelTail.compareAndSetPrev(oldTail, newTail));
+        
+        // Catch up on the opposite link
+        while(oldTail != null && !oldTail.compareAndSetNext(sentinelTail, newTail)) {
+            oldTail = oldTail.getNext();
+        }
     }
 
     // Thread-safe remove
-    public Object removeFirst() {
-        int[] stampHolder = new int[1];
-        Node[] hnt;
-        Node tempNext;
-        do {
-            hnt = headAndTail.get(stampHolder);
-            if(hnt[HEAD] == null)
-                return null;              // Deque was empty, return null
+    @Override
+    public T removeFirst() {
+        LockFreeNode<T> oldHead;
+        
+        do { // Remove marked nodes
+            oldHead = sentinelHead.getNext();
+            while(oldHead.isMarked()) {
+                sentinelHead.compareAndSetNext(oldHead, oldHead.getNext());
+                oldHead = oldHead.getNext();
+            }
 
-            if(hnt[HEAD] == hnt[TAIL] && headAndTail.compareAndSet(hnt, EMPTY, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-                return hnt[HEAD].get();   // Deque had one element, removed head successfully
+            // Logically remove head
+            if (oldHead == sentinelTail) return null;
+        } while (!oldHead.attemptMark(false, true));
 
-        // Conditional force fails with stamp -1 if head.next() or head itself haven't been linked yet
-        } while(!headAndTail.compareAndSet(hnt, new Node[]{hnt[HEAD].getNext(), hnt[TAIL]},
-        ((( (tempNext = hnt[HEAD].getNext()) == null && hnt[HEAD] != hnt[TAIL] ) || tempNext.getPrev() == null)
-        ? -1 : stampHolder[0]), (stampHolder[0]+1) % Integer.MAX_VALUE));
-
-        return hnt[HEAD].get();           // Deque had more than one element, removed head successfully
+        return oldHead.get();
     }
 
     // Thread-safe remove
-    public Object removeLast() {
-        int[] stampHolder = new int[1];
-        Node[] hnt;
-        Node tempPrev;
-        do {
-            hnt = headAndTail.get(stampHolder);
-            if(hnt[HEAD] == null)
-                return null;              // Deque was empty, return null
+    @Override
+    public T removeLast() {
+        LockFreeNode<T> oldTail;
 
-            if(hnt[HEAD] == hnt[TAIL] && headAndTail.compareAndSet(hnt, EMPTY, stampHolder[0], (stampHolder[0]+1) % Integer.MAX_VALUE))
-                return hnt[TAIL].get();   // Deque had one element, removed tail successfully
+        do { // Remove marked nodes
+            oldTail = sentinelTail.getPrev();
+            while(oldTail.isMarked()) {
+                sentinelTail.compareAndSetPrev(oldTail, oldTail.getPrev());
+                oldTail = oldTail.getPrev();
+            }
+            
+            // Logically remove tail
+            if (oldTail == sentinelHead) return null;
+        } while (!oldTail.attemptMark(false, true));
 
-        // Conditional force fails with stamp -1 if tail.prev() or tail itself haven't been linked yet
-        } while(!headAndTail.compareAndSet(hnt, new Node[]{hnt[HEAD], hnt[TAIL].getPrev()},
-        ((( (tempPrev = hnt[TAIL].getPrev()) == null && hnt[TAIL] != hnt[HEAD] ) || tempPrev.getNext() == null)
-        ? -1 : stampHolder[0]), (stampHolder[0]+1) % Integer.MAX_VALUE));
-
-        return hnt[TAIL].get();           // Deque had more than one element, removed tail successfully
+        return oldTail.get();
     }
 
-    // Thread-safe element - Atomic at the point of reading
-    public Object getFirst() {
-        Node tail = headAndTail.getReference()[TAIL];
-        if(tail == null) return null;
-        return tail.get();
+    // Thread-safe peek - Atomic at the point of reading
+    @Override
+    public T getFirst() {
+        return sentinelHead.getNext().get();
     }
 
-    // Thread-safe element - Atomic at the point of reading
-    public Object getLast() {
-        Node head = headAndTail.getReference()[HEAD];
-        if(head == null) return null;
-        return head.get();
+    // Thread-safe peek - Atomic at the point of reading
+    @Override
+    public T getLast() {
+        return sentinelTail.getPrev().get();
     }
 
     // Helper method for readability of code and ease of simulation
+    @Override
     public boolean isEmpty() {
-        return headAndTail.getReference()[HEAD] == null;
+        return sentinelHead.getNext() == sentinelTail || sentinelTail.getPrev() == sentinelHead;
+    }
+
+    // NON THREAD SAFE helper method for retrieving deque size, for simulation only
+    @Override
+    public int size() {
+        LockFreeNode<T> curr = sentinelHead.getNext();
+        int count = 0;
+        while(curr != sentinelTail) {
+            if(!curr.isMarked()) count++;
+            curr = curr.getNext();
+        }
+        return count;
     }
 }

@@ -2,35 +2,35 @@ package concurrent.node;
 
 // Node helper class for building DSA implementations
 
-public class Node {
+public class Node<T> {
 
     // Internal data
-    private Object o;
-    private Node next;
-    private Node prev;
+    private T item;
+    private Node<T> next;
+    private Node<T> prev;
 
     // Basic constructor for Doubly Linked List
-    public Node(Object o, Node next, Node prev) {
-        this.o    = o;
+    public Node(T item, Node<T> next, Node<T> prev) {
+        this.item = item;
         this.next = next;
         this.prev = prev;
     }
 
     // Basic constructor for Singly Linked List
-    public Node(Object o, Node next) {
-        this.o    = o;
+    public Node(T item, Node<T> next) {
+        this.item = item;
         this.next = next;
     }
 
-    // Get and set Object o
-    public Object get() { return o; }
-    public void set(Object o) { this.o = o; }
+    // Get and set T item
+    public T get() { return item; }
+    public void set(T item) { this.item = item; }
 
     // Get and Set next Node
-    public Node getNext() { return next; }
-    public void setNext(Node next) { this.next = next; }
+    public Node<T> getNext() { return next; }
+    public void setNext(Node<T> next) { this.next = next; }
     
     // Get and Set prev Node
-    public Node getPrev() { return prev; }
-    public void setPrev(Node prev) { this.prev = prev; }
+    public Node<T> getPrev() { return prev; }
+    public void setPrev(Node<T> prev) { this.prev = prev; }
 }
